@@ -1,32 +1,9 @@
-# Prerequisites
-*.d
+# Build files and binaries
+/build/*
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# External libraries
+/libs
 
-# Precompiled Headers
-*.gch
-*.pch
+# System hidden files
+.vscode
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
