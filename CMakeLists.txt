@@ -25,18 +25,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIR}/bin")
 
 # Incluir directorios de encabezados
 include_directories(${INCLUDE_DIR}
+                    ${INCLUDE_DIR}/utilities
+                    ${INCLUDE_DIR}/app
                     ${OPCUA_INCLUDE_DIR}
-                    "${OPCUA_INCLUDE_DIR}/uastack"
-                    "${OPCUA_INCLUDE_DIR}/uabasecpp"
-                    "${OPCUA_INCLUDE_DIR}/uapkicpp"
-                    "${OPCUA_INCLUDE_DIR}/xmlparsercpp"
-                    "${OPCUA_INCLUDE_DIR}/uaservercpp")
+                    ${OPCUA_INCLUDE_DIR}/uastack
+                    ${OPCUA_INCLUDE_DIR}/uabasecpp
+                    ${OPCUA_INCLUDE_DIR}/uapkicpp
+                    ${OPCUA_INCLUDE_DIR}/xmlparsercpp
+                    ${OPCUA_INCLUDE_DIR}/uaservercpp)
 
 link_directories(${OPCUA_LIB_DIR})
+
 
 # Crear ejecutables
 add_executable(Prueba
     ${SRC_DIR}/main.cpp
+    # App
+    ${SRC_DIR}/app/myNodeIOEventManager.cpp
+    # Utilities
+    ${SRC_DIR}/utilities/opcserver.cpp
+    ${SRC_DIR}/utilities/shutdown.cpp
 )
 
 # Enlazar librerías necesarias
