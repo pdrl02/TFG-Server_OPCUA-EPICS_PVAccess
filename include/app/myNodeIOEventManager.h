@@ -1,7 +1,9 @@
-#ifndef __MYNODEANDIOMANAGER_H__
-#define __MYNODEANDIOMANAGER_H__
+#ifndef __MYNODEIOEVENTMANAGER_H__
+#define __MYNODEIOEVENTMANAGER_H__
 
 #include "nodemanagerbase.h"
+#include "uaeuinformation.h"
+#include "uarange.h"
 
 class MyNodeIOEventManager : public NodeManagerBase
 {
@@ -16,6 +18,19 @@ private:
 public:
     MyNodeIOEventManager();
     virtual ~MyNodeIOEventManager();
+
+    UaStatus createTypeNode(const UaString & name, const int typeID, OpcUa_Boolean abstract, const UaNodeId & sourceNode);
+
+    UaStatus createAnalogVariable(
+        const UaString & name, 
+        const OpcUa_Double value, 
+        const int typeID, 
+        const UaNodeId & sourceNode, 
+        const UaEUInformation & EngineeringUnits =  UaEUInformation(),
+        const UaRange & EURange = UaRange(),
+        const UaRange & InstrumentRange = UaRange()	);
+    
+    UaStatus createObject();
 
     // NodeManagerUaNode implementation
     virtual UaStatus   afterStartUp();
@@ -36,4 +51,6 @@ public:
 ;
 };
 
-#endif // __MYNODEANDIOMANAGER_H__
+
+
+#endif // __MYNODEIOEVENTMANAGER_H__

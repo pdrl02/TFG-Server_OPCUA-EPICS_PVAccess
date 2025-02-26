@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string.h>
 #include <myNodeIOEventManager.h>
+#include "EPICSClient.h"
+
 
 int OpcServerMain(const char* szAppPath)
 {
@@ -105,9 +107,14 @@ int OpcServerMain(const char* szAppPath)
     return ret;
 }
 
-
 int main(int, char*[])
 {
+    std::cout << "Hola holita" << std::endl;
+
+    EPICSClient client;
+    
+    std::cout << "Ya" << std::endl;
+
     int ret = 0;
     RegisterSignalHandler();
     // Extract application path

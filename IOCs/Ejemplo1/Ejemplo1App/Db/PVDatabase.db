@@ -2,8 +2,8 @@ record(ai, "ejemplo1:Temperature") {
     field(DESC, "Temperature sensor")
     field(SCAN, "1 second")    # Escaneo automático cada 1 segundo
     field(EGU, "C")            # Unidad en grados Celsius
-    field(HIHI, "100")         # Límite de alarma alta-alta
-    field(LOLO, "-10")         # Límite de alarma baja-baja
+    field(DRVL, "-50")         # Mínimo Valor
+    field(DRVH, "100")         # Máximo Valor
     field(VAL, "20")           # Valor incial
 }
 
