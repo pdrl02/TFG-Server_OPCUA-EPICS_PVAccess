@@ -1,5 +1,5 @@
 # Valor binario que sería enviado a un proceso o hardware externo
-record(bo, "ejemplo2:open_cmd") {
+record(bo, "ejemplo2:OpenCmd") {
     field(DESC, "Door open/close command")
     field(VAL, "0")  # Estado inicial: 0 (Off)
     field(ZNAM, "Closed")  # Nombre del estado 0
@@ -8,7 +8,7 @@ record(bo, "ejemplo2:open_cmd") {
 }
 
 # Valor binario que se utiliza para leer señales, se recibe información.
-record(bi, "ejemplo2:status") {
+record(bi, "ejemplo2:Status") {
     field(DESC, "Ejemplo2 running status")
     field(VAL, "1")          # Valor inicial: 1 "Running"
     field(ZNAM, "Stopped")   # Nombre del estado 0

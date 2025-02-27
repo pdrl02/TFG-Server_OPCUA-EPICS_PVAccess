@@ -19,16 +19,27 @@ public:
     MyNodeIOEventManager();
     virtual ~MyNodeIOEventManager();
 
-    UaStatus createTypeNode(const UaString & name, const int typeID, OpcUa_Boolean abstract, const UaNodeId & sourceNode);
+    UaStatus createObjectType(const UaString & name, const int typeID, OpcUa_Boolean abstract, const UaNodeId & sourceNode);
 
-    UaStatus createAnalogVariable(
+    UaStatus createAnalogVariableType(
         const UaString & name, 
         const OpcUa_Double value, 
         const int typeID, 
-        const UaNodeId & sourceNode, 
+        const UaNodeId & sourceNode,
+        const OpcUa_Boolean mandatory = OpcUa_True,
         const UaEUInformation & EngineeringUnits =  UaEUInformation(),
         const UaRange & EURange = UaRange(),
         const UaRange & InstrumentRange = UaRange()	);
+
+    UaStatus createTwoStateDiscreteType(
+        const UaString & name, 
+        const OpcUa_Double value, 
+        const int typeID, 
+        const UaNodeId & sourceNode,
+        const OpcUa_Boolean mandatory = OpcUa_True,
+        const UaLocalizedText & falseText = UaLocalizedText("en", "False"),
+        const UaLocalizedText & trueText = UaLocalizedText("en", "True")
+    );
     
     UaStatus createObject();
 
