@@ -1,34 +1,49 @@
 # Valor que se recibe de una lectura.
 record(int64in, "ejemplo3:int64in") {
     field(VAL, "100")
-    field(SCAN, "1 second")
     field(DESC, "64-bit Integer Input")
+    field(SCAN, "1 second")
+    field(EGU, "Counter")
+    field(LOPR, "-2000")
+    field(HOPR, "100000")
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
 record(int64out, "ejemplo3:int64out") {
-    field(VAL, "200")
-    field(OMSL, "supervisory")              # The new output value is taken from the VAL field, which may have been set from elsewhere.
+    field(VAL, "2000")
     field(DESC, "64-bit Integer Output")
+    field(OMSL, "supervisory")              # The new output value is taken from the VAL field, which may have been set from elsewhere.
+    field(EGU, "J")
+    field(DRVL, "1000")
+    field(DRVH, "5000")
+    #LOPR
+    #HOPR
 }
 
 # Valor que se recibe de una lectura.
 record(longin, "ejemplo3:longin") {
     field(VAL, "27182")
-    field(SCAN, "1 second")
     field(DESC, "Long(32-bit) Integer Input")
+    field(SCAN, "1 second")
+    field(EGU, "Steps")
+    field(LOPR, "0")
+    field(HOPR, "100000")
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
 record(longout, "ejemplo3:longout") {
     field(VAL, "3141592")
-    field(OMSL, "supervisory")
     field(DESC, "Long(32-bit) Integer Output")
+    field(OMSL, "supervisory")
+    field(DRVL, "3000000")
+    field(DRVH, "4000000")
+    field(EGU, "Cal")
 }
 
 # Valor que se recibe de una lectura.
 record(mbbi, "ejemplo3:mbbi") {
-    field(DTYP, "Soft Channel")
+    field(VAL, "0")
+    field(DESC, "Multi-Bit Binary Input with 4 states")
     field(ZRVL, "0")  # Valor para el estado 0
     field(ONVL, "1")  # Valor para el estado 1
     field(TWVL, "2")  # Valor para el estado 2
@@ -37,13 +52,13 @@ record(mbbi, "ejemplo3:mbbi") {
     field(ONST, "State 1")  # Nombre del estado 1
     field(TWST, "State 2")  # Nombre del estado 2
     field(THST, "State 3")  # Nombre del estado 3
-    field(VAL, "0")
-    field(DESC, "Multi-Bit Binary Input with 4 states")
+    
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
 record(mbbo, "ejemplo3:mbbo") {
-    field(DTYP, "Soft Channel")
+    field(VAL, "7")
+    field(DESC, "Multi-Bit Binary Input with 8 states")
     field(ZRVL, "0")  # Valor para el estado 0
     field(ONVL, "1")  # Valor para el estado 1
     field(TWVL, "2")  # Valor para el estado 2
@@ -60,7 +75,6 @@ record(mbbo, "ejemplo3:mbbo") {
     field(FVST, "State 5")
     field(SXST, "State 6")
     field(SVST, "State 7")
-    field(VAL, "7")
-    field(DESC, "Multi-Bit Binary Input with 8 states")
+
 }
 

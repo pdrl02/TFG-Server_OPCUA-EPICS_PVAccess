@@ -1,17 +1,20 @@
 record(ai, "ejemplo1:Temperature") {
     field(DESC, "Temperature sensor")
     field(SCAN, "1 second")    # Escaneo automático cada 1 segundo
-    field(EGU, "C")            # Unidad en grados Celsius
-    field(DRVL, "-50")         # Mínimo Valor
-    field(DRVH, "100")         # Máximo Valor
     field(VAL, "20")           # Valor incial
+    field(LOPR, "-50")         # Mínimo valor que se puede mostrar por la interfaz
+    field(HOPR, "100")         # Máximo valor que se puede mostart por la interfaz
+    field(EGU, "C")            # Unidad en grados Celsius
+
 }
 
 
 record(ao, "ejemplo1:FanSpeed") {
     field(DESC, "Fan speed control")
-    field(VAL, "20")    # Inicialmente al 20%
-    field(DRVL, "0")    # Minimo valor
-    field(DRVH, "100")  # Máximo valor
-    field(EGU, "%")     # Unidad en porcentaje
+    field(VAL, "20")                    # Inicialmente al 20%
+    field(DRVL, "0")                    # Mínimo valor que puede tomar el registro
+    field(DRVH, "100")                  # Máximo valor que puede tomar el registro
+    field(EGU, "%")                     # Unidad en porcentaje
+    field(OMSL, "supervisory")          # Puede recibir comandos desde un sistema externo
+
 }

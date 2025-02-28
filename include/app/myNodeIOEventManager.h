@@ -31,16 +31,24 @@ public:
         const UaRange & EURange = UaRange(),
         const UaRange & InstrumentRange = UaRange()	);
 
-    UaStatus createTwoStateDiscreteType(
+    UaStatus createTwoStateVariableType(
         const UaString & name, 
-        const OpcUa_Double value, 
+        const OpcUa_Boolean value, 
         const int typeID, 
         const UaNodeId & sourceNode,
         const OpcUa_Boolean mandatory = OpcUa_True,
         const UaLocalizedText & falseText = UaLocalizedText("en", "False"),
         const UaLocalizedText & trueText = UaLocalizedText("en", "True")
     );
-    
+
+    UaStatus createMultiStatateVariableType(
+        const UaString & name, 
+        const OpcUa_Int64 value, 
+        const int typeID, 
+        const UaNodeId & sourceNode,
+        const OpcUa_Boolean mandatory = OpcUa_True,
+        const UaLocalizedTextArray & EnumStrings = UaLocalizedTextArray()
+    );
     UaStatus createObject();
 
     // NodeManagerUaNode implementation
