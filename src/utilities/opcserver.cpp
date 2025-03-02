@@ -144,3 +144,7 @@ OpcUa_DateTime OpcServer::getBuildDate() const
 
     return buildDate;
 }
+
+MyNodeIOEventManager* OpcServer::getMyNodeIOEventManager() { 
+    return static_cast<MyNodeIOEventManager*>(getDefaultNodeManager()); 
+}

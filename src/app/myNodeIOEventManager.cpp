@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <typeIDs.h>
+#include <iocBasicObject.h>
 
 /**
  * Crea un type model especifico para el servidor. Se hace definiendo y añadiendo TypeNode al 
@@ -22,9 +23,10 @@ UaStatus MyNodeIOEventManager::createTypeNodes()
 }
 
 MyNodeIOEventManager::MyNodeIOEventManager()
-    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True){
+    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True) {
 
     std::cout << "Constructor del servidor..." << std::endl;
+    //m_defaultLocaleId = "en";
     
 
 }
@@ -33,14 +35,14 @@ MyNodeIOEventManager::~MyNodeIOEventManager(){
     
 }
 
-UaStatus MyNodeIOEventManager::createObjectType(const UaString & name, const int typeID, OpcUa_Boolean abstract, const UaNodeId & sourceNode) {
+UaStatus MyNodeIOEventManager::createObjectType(const UaString & name, const int typeId, OpcUa_Boolean abstract, const UaNodeId & sourceNode) {
    
     UaObjectTypeSimple * pType;
     UaStatus result;
 
     pType = new UaObjectTypeSimple(
         name,                                             // String used in browse name and display name
-        UaNodeId(typeID, getNameSpaceIndex()),            // Numeric NodeID for types
+        UaNodeId(typeId, getNameSpaceIndex()),            // Numeric NodeId for types
         m_defaultLocaleId,                                // Defaul LocaleId for UaLocalizedText strings
         abstract                                          // Abstract object -> Can not be instantiated
     );
@@ -55,7 +57,7 @@ UaStatus MyNodeIOEventManager::createObjectType(const UaString & name, const int
 UaStatus MyNodeIOEventManager::createAnalogVariableType(
     const UaString & name,
     const OpcUa_Double value,
-    const int typeID,
+    const int typeId,
     const UaNodeId & sourceNode,
     const OpcUa_Boolean mandatory,
     const UaEUInformation & EngineeringUnits,
@@ -70,7 +72,7 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
     // Add Variable "Name" as BaseAnalogType
     defaultValue.setDouble(value);
     pBaseAnalogType = new OpcUa::BaseAnalogType(
-        UaNodeId( typeID, getNameSpaceIndex()),
+        UaNodeId( typeId, getNameSpaceIndex()),
         name,
         getNameSpaceIndex(),
         defaultValue,
@@ -94,7 +96,7 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
 UaStatus MyNodeIOEventManager::createTwoStateVariableType(
     const UaString &name, 
     const OpcUa_Boolean value, 
-    const int typeID,
+    const int typeId,
     const UaNodeId &sourceNode,
     const OpcUa_Boolean mandatory,
     const UaLocalizedText & falseText,
@@ -107,7 +109,7 @@ UaStatus MyNodeIOEventManager::createTwoStateVariableType(
 
     defaultValue.setBool(value);
     pTwoStateDiscreteType = new OpcUa::TwoStateDiscreteType(
-        UaNodeId(typeID, getNameSpaceIndex()),
+        UaNodeId(typeId, getNameSpaceIndex()),
         name,
         getNameSpaceIndex(),
         defaultValue,
@@ -127,7 +129,7 @@ UaStatus MyNodeIOEventManager::createTwoStateVariableType(
 UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
     const UaString &name, 
     const OpcUa_Int64 value, 
-    const int typeID,
+    const int typeId,
     const UaNodeId &sourceNode, 
     const OpcUa_Boolean mandatory,
     const UaLocalizedTextArray & enumStrings 
@@ -139,7 +141,7 @@ UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
 
     defaultValue.setInt64(value);
     pMultiStateDiscreteType = new OpcUa::MultiStateDiscreteType(
-        UaNodeId(typeID, getNameSpaceIndex()),
+        UaNodeId(typeId, getNameSpaceIndex()),
         name,
         getNameSpaceIndex(),
         defaultValue,
@@ -149,6 +151,28 @@ UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
     pMultiStateDiscreteType->setModellingRuleId( mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
     pMultiStateDiscreteType->setEnumStrings(enumStrings);
     result = addNodeAndReference(sourceNode, pMultiStateDiscreteType, OpcUaId_HasComponent);
+    
+    return result;
+}
+
+UaStatus MyNodeIOEventManager::createObject(
+    const UaString & objectName,         // Name of the object
+    const int typeId,                    // Type of the object
+    const UaNodeId & objectId,           // NodeId of the new object
+    const UaNodeId & sourceNodeId        // Node of the parent
+) {
+//    std::cout << "AA" << m_defaultLocaleId << "AA" << std::endl;
+    UaStatus result;
+
+    IocBasicObject * pObject = new IocBasicObject(objectName, objectId, m_defaultLocaleId, this, typeId);
+    //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_Temperature, this);
+    //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_FanSpeed, this);
+
+    if(!sourceNodeId)
+        std::cout << "Problema" << std::endl;
+
+    result = addNodeAndReference(sourceNodeId, pObject, OpcUaId_Organizes); 
+    
     
     return result;
 }
@@ -164,7 +188,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     createObjectType("Ejemplo2Type", TFG_IOC_Ejemplo2, OpcUa_False, UaNodeId(TFG_IOC_Basic_Type, getNameSpaceIndex()));
     createObjectType("Ejemplo3Type", TFG_IOC_Ejemplo3, OpcUa_False, UaNodeId(TFG_IOC_Basic_Type, getNameSpaceIndex()));
 
-    // Create variables for Ejemplo1
+    // Create variables for Ejemplo1 
     UaEUInformation EUCelsius(
         getNameSpaceUri(), 
         4408652,                                    // UnitId for Celsius
@@ -252,6 +276,10 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     
     createMultiStatateVariableType("mbbo", 7, TFG_IOC_Ejemplo3_mbbo, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
         OpcUa_True, states);
+
+    
+    createObject("obj1", TFG_IOC_Ejemplo1, UaNodeId("obj1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+
     
     return UaStatus();  
 }

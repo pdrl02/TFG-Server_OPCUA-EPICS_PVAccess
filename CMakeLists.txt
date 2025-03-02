@@ -56,6 +56,7 @@ add_executable(Prueba
     # Utilities
     ${SRC_DIR}/utilities/opcserver.cpp
     ${SRC_DIR}/utilities/shutdown.cpp
+    ${SRC_DIR}/utilities/iocBasicObject.cpp
 )
 
 # Definir las rutas a las bibliotecas para los ejecutables

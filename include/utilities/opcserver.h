@@ -31,6 +31,7 @@
 #define MAIN_OPCSERVER_H
 
 #include "uaserverapplication.h"
+#include "myNodeIOEventManager.h"
 
 class UaServer;
 
@@ -49,6 +50,8 @@ public:
     virtual ~OpcServer();
 
     virtual OpcUa_DateTime getBuildDate() const;
+
+    virtual MyNodeIOEventManager * getMyNodeIOEventManager();
 
 protected:
     virtual UaStatus afterStartUp();

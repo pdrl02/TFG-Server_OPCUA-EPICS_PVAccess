@@ -19,12 +19,12 @@ public:
     MyNodeIOEventManager();
     virtual ~MyNodeIOEventManager();
 
-    UaStatus createObjectType(const UaString & name, const int typeID, OpcUa_Boolean abstract, const UaNodeId & sourceNode);
+    UaStatus createObjectType(const UaString & name, const int typeId, OpcUa_Boolean abstract, const UaNodeId & sourceNode);
 
     UaStatus createAnalogVariableType(
         const UaString & name, 
         const OpcUa_Double value, 
-        const int typeID, 
+        const int typeId, 
         const UaNodeId & sourceNode,
         const OpcUa_Boolean mandatory = OpcUa_True,
         const UaEUInformation & EngineeringUnits =  UaEUInformation(),
@@ -34,7 +34,7 @@ public:
     UaStatus createTwoStateVariableType(
         const UaString & name, 
         const OpcUa_Boolean value, 
-        const int typeID, 
+        const int typeId, 
         const UaNodeId & sourceNode,
         const OpcUa_Boolean mandatory = OpcUa_True,
         const UaLocalizedText & falseText = UaLocalizedText("en", "False"),
@@ -44,12 +44,17 @@ public:
     UaStatus createMultiStatateVariableType(
         const UaString & name, 
         const OpcUa_Int64 value, 
-        const int typeID, 
+        const int typeId, 
         const UaNodeId & sourceNode,
         const OpcUa_Boolean mandatory = OpcUa_True,
         const UaLocalizedTextArray & EnumStrings = UaLocalizedTextArray()
     );
-    UaStatus createObject();
+    UaStatus createObject(
+        const UaString & objectName,         // Name of the object
+        const int typeId,                   // Type of the object
+        const UaNodeId & objectId,           // NodeId of the new object
+        const UaNodeId & parentNodeId               // Node of the parent;
+    );
 
     // NodeManagerUaNode implementation
     virtual UaStatus   afterStartUp();

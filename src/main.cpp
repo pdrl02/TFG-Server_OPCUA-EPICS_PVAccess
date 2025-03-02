@@ -5,8 +5,10 @@
 #include "uathread.h"
 #include <iostream>
 #include <string.h>
+
+#include <EPICSClient.h>
 #include <myNodeIOEventManager.h>
-#include "EPICSClient.h"
+#include <typeIDs.h>
 
 
 int OpcServerMain(const char* szAppPath)
@@ -69,10 +71,13 @@ int OpcServerMain(const char* szAppPath)
             printf("***************************************************\n");
             // Wait for user command to terminate the server thread.
             // Simulate data
-            OpcUa_Boolean useOtherText = OpcUa_True;
-            UaVariant newValue;
-            UaDataValue dataValue;
 
+            // UaString name = "Obj1";
+            // pServer->getMyNodeIOEventManager()->
+            //     createObject(name, TFG_IOC_Ejemplo1, UaNodeId(name, pNodeConfig->getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+
+
+            
             const char animation[] = { '#', '#', '#', ' '}; // Secuencia de puntos
             int index = 0;
         
@@ -111,7 +116,7 @@ int main(int, char*[])
 {
     std::cout << "Hola holita" << std::endl;
 
-    EPICSClient client;
+    //EPICSClient client;
     
     std::cout << "Ya" << std::endl;
 
