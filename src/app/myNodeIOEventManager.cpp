@@ -165,25 +165,22 @@ UaStatus MyNodeIOEventManager::createObject(
     UaStatus result;
 
     IocBasicObject * pObject = new IocBasicObject(objectName, objectId, m_defaultLocaleId, this, typeId);
-    //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_Temperature, this);
-    //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_FanSpeed, this);
 
-    const UaReference * referenceList = pObject->getUaReferenceLists()->pSourceNodes();
     m_mutexNodes.lock();
     std::vector<UaVariable*> variables = getInstanceDeclarationVariableArray(typeId);
     for(auto* it : variables){
-        // Determinar tipo de variable usando dynamic_cast
+        // Determine the type of variable using dynamic_cast
         if (auto* analogVar = dynamic_cast<OpcUa::BaseAnalogType*>(it)) {
-            // Crear variable analógica
-            pObject->addAnalogVariable(analogVar->nodeId().identifierNumeric(), this);
+            // Create analog variable
+            pObject->addAnalogVariable(analogVar->nodeId().identifierNumeric());
         }
         else if (auto* twoStateVar = dynamic_cast<OpcUa::TwoStateDiscreteType*>(it)) {
-            // Crear variable binaria (dos estados)
-            //pObject->addTwoStateVariable(twoStateVar->nodeId().numeric(), this);
+            // Create binary variable
+            pObject->addTwoStateVariable(twoStateVar->nodeId().identifierNumeric());
         }
         else if (auto* multiStateVar = dynamic_cast<OpcUa::MultiStateDiscreteType*>(it)) {
-            // Crear variable de múltiples estados
-            //pObject->addMultiStateVariable(multiStateVar->nodeId().numeric(), this);
+            // Create multi state variable
+            pObject->addMultiStateVariable(multiStateVar->nodeId().identifierNumeric());
         }
         else {
             std::cerr << "Error: Tipo de variable no reconocido" << std::endl;
@@ -297,7 +294,11 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         OpcUa_True, states);
 
     
-    createObject("obj1", TFG_IOC_Ejemplo1, UaNodeId("obj1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("obj1.1", TFG_IOC_Ejemplo1, UaNodeId("obj1.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("obj1.2", TFG_IOC_Ejemplo1, UaNodeId("obj1.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("obj2.1", TFG_IOC_Ejemplo2, UaNodeId("obj2.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("obj2.2", TFG_IOC_Ejemplo2, UaNodeId("obj2.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("obj3.1", TFG_IOC_Ejemplo3, UaNodeId("obj3.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
 
     
     return UaStatus();  
