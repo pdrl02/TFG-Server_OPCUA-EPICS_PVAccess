@@ -161,18 +161,37 @@ UaStatus MyNodeIOEventManager::createObject(
     const UaNodeId & objectId,           // NodeId of the new object
     const UaNodeId & sourceNodeId        // Node of the parent
 ) {
-//    std::cout << "AA" << m_defaultLocaleId << "AA" << std::endl;
+    //std::cout << "AA" << m_defaultLocaleId << "AA" << std::endl;
     UaStatus result;
 
     IocBasicObject * pObject = new IocBasicObject(objectName, objectId, m_defaultLocaleId, this, typeId);
     //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_Temperature, this);
     //pObject->addAnalogVariable(TFG_IOC_Ejemplo1_FanSpeed, this);
 
-    if(!sourceNodeId)
-        std::cout << "Problema" << std::endl;
+    const UaReference * referenceList = pObject->getUaReferenceLists()->pSourceNodes();
+    m_mutexNodes.lock();
+    std::vector<UaVariable*> variables = getInstanceDeclarationVariableArray(typeId);
+    for(auto* it : variables){
+        // Determinar tipo de variable usando dynamic_cast
+        if (auto* analogVar = dynamic_cast<OpcUa::BaseAnalogType*>(it)) {
+            // Crear variable analógica
+            pObject->addAnalogVariable(analogVar->nodeId().identifierNumeric(), this);
+        }
+        else if (auto* twoStateVar = dynamic_cast<OpcUa::TwoStateDiscreteType*>(it)) {
+            // Crear variable binaria (dos estados)
+            //pObject->addTwoStateVariable(twoStateVar->nodeId().numeric(), this);
+        }
+        else if (auto* multiStateVar = dynamic_cast<OpcUa::MultiStateDiscreteType*>(it)) {
+            // Crear variable de múltiples estados
+            //pObject->addMultiStateVariable(multiStateVar->nodeId().numeric(), this);
+        }
+        else {
+            std::cerr << "Error: Tipo de variable no reconocido" << std::endl;
+        }
+    }
 
+    m_mutexNodes.unlock();
     result = addNodeAndReference(sourceNodeId, pObject, OpcUaId_Organizes); 
-    
     
     return result;
 }
@@ -321,4 +340,25 @@ UaVariable * MyNodeIOEventManager::getInstanceDeclarationVariable(OpcUa_UInt32 n
     else
         return NULL;
     
+}
+
+// Thread unsafe require     m_mutexNodes.lock();
+std::vector<UaVariable*> MyNodeIOEventManager::getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier){
+    
+    UaNode* pNode = findNode(UaNodeId(numericIdentifier, getNameSpaceIndex()));
+    UaReference * pReference = const_cast<UaReference *>(pNode->getUaReferenceLists()->pTargetNodes());
+    std::vector<UaVariable*> variables;
+
+    while(pReference != nullptr){
+        UaNode * pNode = pReference->pTargetNode();
+        if ( (pNode != NULL) && (pNode->nodeClass() == OpcUa_NodeClass_Variable) )
+            variables.push_back((UaVariable *)pNode);
+
+        pReference = pReference->pNextForwardReference();
+    }
+
+    return variables;
+
+    
+
 }

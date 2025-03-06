@@ -71,6 +71,7 @@ public:
 
     // Método para obtener los nodos de declaración de instancia
     UaVariable* getInstanceDeclarationVariable(OpcUa_UInt32 numericIdentifier);
+    std::vector<UaVariable*> getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier);
 
 ;
 };
