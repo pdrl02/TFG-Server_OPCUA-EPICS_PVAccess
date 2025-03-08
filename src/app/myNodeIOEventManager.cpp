@@ -59,7 +59,8 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
     const OpcUa_Double value,
     const int typeId,
     const UaNodeId & sourceNode,
-    const OpcUa_Boolean mandatory,
+    const bool writable,
+    const bool mandatory,
     const UaEUInformation & EngineeringUnits,
     const UaRange & EURange,
     const UaRange & InstrumentRange	
@@ -76,7 +77,7 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
         name,
         getNameSpaceIndex(),
         defaultValue,
-        Ua_AccessLevel_CurrentRead,
+        (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
     pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
     result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
@@ -98,7 +99,8 @@ UaStatus MyNodeIOEventManager::createTwoStateVariableType(
     const OpcUa_Boolean value, 
     const int typeId,
     const UaNodeId &sourceNode,
-    const OpcUa_Boolean mandatory,
+    const bool writable,
+    const bool mandatory,
     const UaLocalizedText & falseText,
     const UaLocalizedText & trueText
     ) {
@@ -113,7 +115,7 @@ UaStatus MyNodeIOEventManager::createTwoStateVariableType(
         name,
         getNameSpaceIndex(),
         defaultValue,
-        Ua_AccessLevel_CurrentRead,
+        (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
 
     pTwoStateDiscreteType->setModellingRuleId( mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
@@ -131,7 +133,8 @@ UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
     const OpcUa_Int64 value, 
     const int typeId,
     const UaNodeId &sourceNode, 
-    const OpcUa_Boolean mandatory,
+    const bool writable,
+    const bool mandatory,
     const UaLocalizedTextArray & enumStrings 
     ) {
     
@@ -145,7 +148,7 @@ UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
         name,
         getNameSpaceIndex(),
         defaultValue,
-        Ua_AccessLevel_CurrentRead,
+        (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
 
     pMultiStateDiscreteType->setModellingRuleId( mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
@@ -214,7 +217,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     UaRange temperatureRange(-50, 100);
 
     createAnalogVariableType("Temperature", 20, TFG_IOC_Ejemplo1_Temperature, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
-                         OpcUa_True, EUCelsius, temperatureRange);
+                         false, true, EUCelsius, temperatureRange);
 
     UaEUInformation EUPercentage(
         getNameSpaceUri(), 
@@ -226,14 +229,14 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     UaRange fanSpeedRange(0, 100);
 
     createAnalogVariableType("FanSpeed", 20, TFG_IOC_Ejemplo1_FanSpeed, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
-                         OpcUa_True, EUPercentage, fanSpeedRange);
+                         true, true, EUPercentage, fanSpeedRange);
 
 
     // Create Variables for Ejemplo2
     createTwoStateVariableType("OpenCmd", OpcUa_False, TFG_IOC_Ejemplo2_OpenCmd, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
-                                OpcUa_True, UaLocalizedText("en", "Closed"), UaLocalizedText("en", "Open"));
+                                true, true, UaLocalizedText("en", "Closed"), UaLocalizedText("en", "Open"));
     createTwoStateVariableType("Status", OpcUa_True, TFG_IOC_Ejemplo2_Status, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
-                                OpcUa_True, UaLocalizedText("en", "Stopped"), UaLocalizedText("en", "Running"));
+                                false, true, UaLocalizedText("en", "Stopped"), UaLocalizedText("en", "Running"));
 
     // Create Variables for Ejemplo3
     UaEUInformation EUCounter(
@@ -244,7 +247,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     );
     UaRange counterRange(-2000, 100000);
     createAnalogVariableType("int64in", 100, TFG_IOC_Ejemplo3_int64in, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-                             OpcUa_True, EUCounter, counterRange);
+                             false, true, EUCounter, counterRange);
     
     UaEUInformation EUJoules(
         getNameSpaceUri(), 
@@ -254,7 +257,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     );
     UaRange joulesRange(1000, 5000);
     createAnalogVariableType("int64out", 2000, TFG_IOC_Ejemplo3_int64out, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-                             OpcUa_True, EUJoules, joulesRange);
+                             true, true, EUJoules, joulesRange);
 
     UaEUInformation EUSteps(
         getNameSpaceUri(), 
@@ -264,7 +267,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     );
     UaRange stepsRange(0, 100000);
     createAnalogVariableType("longin", 27182, TFG_IOC_Ejemplo3_longin, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-                             OpcUa_True, EUSteps, stepsRange);
+                             false, true, EUSteps, stepsRange);
 
     UaEUInformation EUCalories(
         getNameSpaceUri(), 
@@ -274,7 +277,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     );
     UaRange caloriesRange(3000000, 4000000);
     createAnalogVariableType("longout", 3141592, TFG_IOC_Ejemplo3_longout, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-                             OpcUa_True, EUCalories, caloriesRange);
+                             true, true, EUCalories, caloriesRange);
 
     OpcUa_Int32 size = 4;
     UaLocalizedTextArray states;
@@ -283,7 +286,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", ("State " + std::to_string(i)).c_str()).copyTo(&states[i]);
 
     createMultiStatateVariableType("mbbi", 0, TFG_IOC_Ejemplo3_mbbi, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-                                    OpcUa_True, states);
+                                    false, true, states);
 
     
     states.create(size * 2);
@@ -291,7 +294,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", ("State " + std::to_string(i)).c_str()).copyTo(&states[i]);
     
     createMultiStatateVariableType("mbbo", 7, TFG_IOC_Ejemplo3_mbbo, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
-        OpcUa_True, states);
+                                    true, true, states);
 
     
     createObject("obj1.1", TFG_IOC_Ejemplo1, UaNodeId("obj1.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);

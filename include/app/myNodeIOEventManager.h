@@ -26,7 +26,8 @@ public:
         const OpcUa_Double value, 
         const int typeId, 
         const UaNodeId & sourceNode,
-        const OpcUa_Boolean mandatory = OpcUa_True,
+        const bool writable = false,
+        const bool mandatory = true,
         const UaEUInformation & EngineeringUnits =  UaEUInformation(),
         const UaRange & EURange = UaRange(),
         const UaRange & InstrumentRange = UaRange()	);
@@ -36,7 +37,8 @@ public:
         const OpcUa_Boolean value, 
         const int typeId, 
         const UaNodeId & sourceNode,
-        const OpcUa_Boolean mandatory = OpcUa_True,
+        const bool writable = false,
+        const bool mandatory = true,
         const UaLocalizedText & falseText = UaLocalizedText("en", "False"),
         const UaLocalizedText & trueText = UaLocalizedText("en", "True")
     );
@@ -46,7 +48,8 @@ public:
         const OpcUa_Int64 value, 
         const int typeId, 
         const UaNodeId & sourceNode,
-        const OpcUa_Boolean mandatory = OpcUa_True,
+        const bool writable = false,
+        const bool mandatory = true,
         const UaLocalizedTextArray & EnumStrings = UaLocalizedTextArray()
     );
     UaStatus createObject(
