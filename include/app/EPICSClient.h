@@ -6,12 +6,14 @@
 
 
 using namespace epics::pvaClient;
+using namespace epics::pvData;
+
 
 
 class EPICSClient {
 
 private:
-    PvaClient::shared_pointer client;
+    
 
 public:
     EPICSClient();

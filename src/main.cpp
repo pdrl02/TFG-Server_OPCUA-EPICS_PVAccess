@@ -10,6 +10,9 @@
 #include <myNodeIOEventManager.h>
 #include <typeIDs.h>
 
+#include <thread>
+
+
 
 int OpcServerMain(const char* szAppPath)
 {
@@ -112,24 +115,73 @@ int OpcServerMain(const char* szAppPath)
     return ret;
 }
 
+
+class MyMonitor : public epics::pvaClient::PvaClientMonitorRequester {
+
+    void monitorConnect(Status const & status, PvaClientMonitorPtr const & monitor, StructureConstPtr const & structure) override {
+
+        std::cout << "Monitor conectado: " << monitor->getPvaClientChannel()->getChannelName() << std::endl;
+        
+
+    }
+
+    void event(PvaClientMonitorPtr const & monitor ) override {
+
+        std::cout << "Entro en event" << std::endl;
+        if(monitor->getPvaClientChannel()->getChannelName() == "ejemplo1:Temperature")
+            std::this_thread::sleep_for(std::chrono::seconds(3));
+        else
+            std:: cout << "Monitor 2: " << monitor->getPvaClientChannel()->getChannelName() << std::endl;
+        while (monitor->poll()) {  // Verifica si hay datos nuevos
+            auto pvStruct = monitor->getData()->getPVStructure();
+            auto pvValue = pvStruct->getSubField<PVDouble>("value");
+            if (pvValue) {
+                std::cout << "Nuevo valor recibido: " << pvValue->get() << std::endl;
+            }
+            monitor->releaseEvent();
+        }
+
+    }
+
+    void unlisten() override {
+
+        std::cout << "Monitor desconectado" << std::endl;
+    }
+};
+
+
 int main(int, char*[])
 {
-    std::cout << "Hola holita" << std::endl;
+    // // Servidor OPC UA
+    // int ret = 0;
+    // RegisterSignalHandler();
+    // // Extract application path
+    // char* pszAppPath = getAppPath();
+    // //-------------------------------------------
+    // // Call the OPC server main method
+    // ret = OpcServerMain(pszAppPath);
+    // //-------------------------------------------
+    // if ( pszAppPath ) 
+    //     delete [] pszAppPath;
 
-    //EPICSClient client;
+    // return ret;
+
+    // Prueba de pvaccess
     
-    std::cout << "Ya" << std::endl;
+    PvaClientPtr pClient = PvaClient::get("pva"); 
+    PvaClientChannelPtr pChannel = pClient->channel("ejemplo1:Temperature");
 
-    int ret = 0;
-    RegisterSignalHandler();
-    // Extract application path
-    char* pszAppPath = getAppPath();
-    //-------------------------------------------
-    // Call the OPC server main method
-    ret = OpcServerMain(pszAppPath);
-    //-------------------------------------------
-    if ( pszAppPath ) 
-        delete [] pszAppPath;
+    // Monitorea solo value
+    PvaClientMonitorRequesterPtr pRequester = std::make_shared<MyMonitor>();
+    PvaClientMonitorPtr pMonitor = pChannel->monitor("field(value)", pRequester);
 
-    return ret;
+
+    PvaClientChannelPtr pChannel2 = pClient->channel("ejemplo1:FanSpeed");
+    PvaClientMonitorRequesterPtr pRequester2 = std::make_shared<MyMonitor>();
+    // Monitorea solo value
+    PvaClientMonitorPtr pMonitor2 = pChannel2->monitor("field(value)", pRequester2);
+
+    while (true) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+
+
 }
