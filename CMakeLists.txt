@@ -25,6 +25,11 @@ set(EPICS_BASE_DIR "libs/base-7.0.8.1")
 set(EPICS_LIB_DIR ${EPICS_BASE_DIR}/lib/linux-x86_64)
 set(EPICS_INCLUDE_DIR ${EPICS_BASE_DIR}/include)
 
+# Directorios de la libreria de PVXS
+set(PVXS_BASE_DIR "libs/pvxs")
+set(PVXS_LIB_DIR ${PVXS_BASE_DIR}/lib/linux-x86_64)
+set(PVXS_INCLUDE_DIR ${PVXS_BASE_DIR}/include)
+
 # Especificar la carpeta de compilación
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIR}/bin")
 
@@ -45,6 +50,9 @@ include_directories(
                     ${EPICS_INCLUDE_DIR}
                     ${EPICS_INCLUDE_DIR}/os/Linux
                     ${EPICS_INCLUDE_DIR}/compiler/gcc
+                    # Directorios de PVXS
+                    ${PVXS_INCLUDE_DIR}
+
 )
 
 # Crear ejecutables
@@ -60,7 +68,7 @@ add_executable(Prueba
 )
 
 # Definir las rutas a las bibliotecas para los ejecutables
-target_link_directories(Prueba PRIVATE ${OPCUA_LIB_DIR} ${EPICS_LIB_DIR})
+target_link_directories(Prueba PRIVATE ${OPCUA_LIB_DIR} ${EPICS_LIB_DIR} ${PVXS_LIB_DIR})
 
 # Enlazar librerías necesarias
 set(OPCUA_LIBS 
@@ -80,7 +88,10 @@ set(EPICS_LIBS
         Com
         pvaClient)
 
-target_link_libraries( Prueba ${OPCUA_LIBS} ${EPICS_LIBS})
+set(PVXS_LIBS
+        pvxs)
+
+target_link_libraries( Prueba ${OPCUA_LIBS} ${EPICS_LIBS} ${PVXS_LIBS})
 
 # Realizar las definiciones necesarias 
 target_compile_definitions(Prueba 

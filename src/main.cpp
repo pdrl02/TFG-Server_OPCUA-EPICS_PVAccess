@@ -115,40 +115,7 @@ int OpcServerMain(const char* szAppPath)
     return ret;
 }
 
-
-class MyMonitor : public epics::pvaClient::PvaClientMonitorRequester {
-
-    void monitorConnect(Status const & status, PvaClientMonitorPtr const & monitor, StructureConstPtr const & structure) override {
-
-        std::cout << "Monitor conectado: " << monitor->getPvaClientChannel()->getChannelName() << std::endl;
-        
-
-    }
-
-    void event(PvaClientMonitorPtr const & monitor ) override {
-
-        std::cout << "Entro en event" << std::endl;
-        if(monitor->getPvaClientChannel()->getChannelName() == "ejemplo1:Temperature")
-            std::this_thread::sleep_for(std::chrono::seconds(3));
-        else
-            std:: cout << "Monitor 2: " << monitor->getPvaClientChannel()->getChannelName() << std::endl;
-        while (monitor->poll()) {  // Verifica si hay datos nuevos
-            auto pvStruct = monitor->getData()->getPVStructure();
-            auto pvValue = pvStruct->getSubField<PVDouble>("value");
-            if (pvValue) {
-                std::cout << "Nuevo valor recibido: " << pvValue->get() << std::endl;
-            }
-            monitor->releaseEvent();
-        }
-
-    }
-
-    void unlisten() override {
-
-        std::cout << "Monitor desconectado" << std::endl;
-    }
-};
-
+#include <pvxs/client.h>
 
 int main(int, char*[])
 {
@@ -166,22 +133,21 @@ int main(int, char*[])
 
     // return ret;
 
-    // Prueba de pvaccess
+    // Prueba de pvxs
+    using namespace pvxs;
+
+    // Configure client using $EPICS_PVA_*
+    auto ctxt(client::Context::fromEnv());
+
+    // fetch PV "some:pv:name" and wait up to 5 seconds for a reply.
+    // (throws an exception on error, including timeout)
+    Value reply = ctxt.get("some:pv:name").exec()->wait(5.0);
+
+    // Reply is printed to stdout.
+    std::cout<<reply;
+
+    return 0;
     
-    PvaClientPtr pClient = PvaClient::get("pva"); 
-    PvaClientChannelPtr pChannel = pClient->channel("ejemplo1:Temperature");
-
-    // Monitorea solo value
-    PvaClientMonitorRequesterPtr pRequester = std::make_shared<MyMonitor>();
-    PvaClientMonitorPtr pMonitor = pChannel->monitor("field(value)", pRequester);
-
-
-    PvaClientChannelPtr pChannel2 = pClient->channel("ejemplo1:FanSpeed");
-    PvaClientMonitorRequesterPtr pRequester2 = std::make_shared<MyMonitor>();
-    // Monitorea solo value
-    PvaClientMonitorPtr pMonitor2 = pChannel2->monitor("field(value)", pRequester2);
-
-    while (true) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
 
 
 }
