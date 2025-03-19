@@ -141,7 +141,7 @@ int main(int, char*[])
 
     // fetch PV "some:pv:name" and wait up to 5 seconds for a reply.
     // (throws an exception on error, including timeout)
-    Value reply = ctxt.get("some:pv:name").exec()->wait(5.0);
+    Value reply = ctxt.get("ejemplo1:Temperature").exec()->wait(5.0);
 
     // Reply is printed to stdout.
     std::cout<<reply;

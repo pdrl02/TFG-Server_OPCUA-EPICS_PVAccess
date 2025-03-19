@@ -26,16 +26,12 @@ public:
 
     virtual ~IocBasicObject(void);
 
-    UaStatus addAnalogVariable(const int typeId);
-    UaStatus addTwoStateVariable(const int typeId);
-    UaStatus addMultiStateVariable(const int typeId);
+    UaStatus addVariable(const int typeIdVar);
 
     inline UaNodeId typeDefinitionId() const { return UaNodeId(m_typeId, m_pNodeManager->getNameSpaceIndex()); };
 
     // Implement UaObject interface
     OpcUa_Byte eventNotifier() const;
-
-    inline virtual UaNodeId getTypeId() const { return UaNodeId(m_typeId, browseName().namespaceIndex()); };
 
 
 };

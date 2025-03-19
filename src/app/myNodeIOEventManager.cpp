@@ -27,7 +27,6 @@ MyNodeIOEventManager::MyNodeIOEventManager()
 
     std::cout << "Constructor del servidor..." << std::endl;
     //m_defaultLocaleId = "en";
-    
 
 }
 
@@ -172,22 +171,7 @@ UaStatus MyNodeIOEventManager::createObject(
     m_mutexNodes.lock();
     std::vector<UaVariable*> variables = getInstanceDeclarationVariableArray(typeId);
     for(auto* it : variables){
-        // Determine the type of variable using dynamic_cast
-        if (auto* analogVar = dynamic_cast<OpcUa::BaseAnalogType*>(it)) {
-            // Create analog variable
-            pObject->addAnalogVariable(analogVar->nodeId().identifierNumeric());
-        }
-        else if (auto* twoStateVar = dynamic_cast<OpcUa::TwoStateDiscreteType*>(it)) {
-            // Create binary variable
-            pObject->addTwoStateVariable(twoStateVar->nodeId().identifierNumeric());
-        }
-        else if (auto* multiStateVar = dynamic_cast<OpcUa::MultiStateDiscreteType*>(it)) {
-            // Create multi state variable
-            pObject->addMultiStateVariable(multiStateVar->nodeId().identifierNumeric());
-        }
-        else {
-            std::cerr << "Error: Tipo de variable no reconocido" << std::endl;
-        }
+        pObject->addVariable(it->nodeId().identifierNumeric());
     }
 
     m_mutexNodes.unlock();

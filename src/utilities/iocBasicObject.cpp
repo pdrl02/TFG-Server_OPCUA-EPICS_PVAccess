@@ -19,71 +19,71 @@ IocBasicObject::IocBasicObject(
 
 IocBasicObject::~IocBasicObject(void) {}
 
-UaStatus IocBasicObject::addAnalogVariable( const int typeIdVar) {
+UaStatus IocBasicObject::addVariable(const int typeIdVar) { 
     
-    UaVariable* pInstanceDeclaration;
-    OpcUa::AnalogItemType* pAnalogVar;
-
-    pInstanceDeclaration = m_pNodeManager->getInstanceDeclarationVariable(typeIdVar);
+    UaVariable* pInstanceDeclaration = m_pNodeManager->getInstanceDeclarationVariable(typeIdVar);
     UA_ASSERT(pInstanceDeclaration!=NULL);
-    pAnalogVar = new OpcUa::AnalogItemType(
-        this,
-        pInstanceDeclaration,
-        m_pNodeManager,
-        m_pSharedMutex
-    );
 
-    OpcUa::BaseAnalogType * pAnalogType = dynamic_cast<OpcUa::BaseAnalogType*>(pInstanceDeclaration);
-    pAnalogVar->setEngineeringUnits(pAnalogType->getEngineeringUnits());
-    pAnalogVar->setEURange(pAnalogType->getEURange());
-    pAnalogVar->setInstrumentRange(pAnalogType->getInstrumentRange());
-    
+    UaStatus result;
 
-    return m_pNodeManager->addNodeAndReference(this, pAnalogVar, OpcUaId_HasComponent);
-    
-}
+    // Use dynamic cast to determine the variable type
+    // Analog Variable
+    if (auto* pAnalogType = dynamic_cast<OpcUa::BaseAnalogType*>(pInstanceDeclaration)) {
 
-UaStatus IocBasicObject::addTwoStateVariable(const int typeIdVar) {
-    
-    UaVariable* pInstanceDeclaration;
-    OpcUa::TwoStateDiscreteType* pTwoStateVar;
+        OpcUa::AnalogItemType* pAnalogVar = new OpcUa::AnalogItemType(
+            this,
+            pInstanceDeclaration,
+            m_pNodeManager,
+            m_pSharedMutex
+        );
+        pAnalogVar->setEngineeringUnits(pAnalogType->getEngineeringUnits());
+        pAnalogVar->setEURange(pAnalogType->getEURange());
+        pAnalogVar->setInstrumentRange(pAnalogType->getInstrumentRange());
 
-    pInstanceDeclaration = m_pNodeManager->getInstanceDeclarationVariable(typeIdVar);
-    UA_ASSERT(pInstanceDeclaration!=NULL);
-    pTwoStateVar = new OpcUa::TwoStateDiscreteType(
-        this,
-        pInstanceDeclaration,
-        m_pNodeManager,
-        m_pSharedMutex
-    );
+        result = m_pNodeManager->addNodeAndReference(this, pAnalogVar, OpcUaId_HasComponent);
+        
+    }
+    // Two State Variable
+    else if (auto* pTwoStateType = dynamic_cast<OpcUa::TwoStateDiscreteType*>(pInstanceDeclaration)) {
+        
+        OpcUa::TwoStateDiscreteType* pTwoStateVar = new OpcUa::TwoStateDiscreteType(
+            this,
+            pInstanceDeclaration,
+            m_pNodeManager,
+            m_pSharedMutex
+        );
+        
+        pTwoStateVar->setFalseState(pTwoStateType->getFalseState(NULL));
+        pTwoStateVar->setTrueState(pTwoStateType->getTrueState(NULL));
 
-    OpcUa::TwoStateDiscreteType * pTwoStateType = dynamic_cast<OpcUa::TwoStateDiscreteType*>(pInstanceDeclaration);
-    pTwoStateVar->setFalseState(pTwoStateType->getFalseState(NULL));
-    pTwoStateVar->setTrueState(pTwoStateType->getTrueState(NULL));
+        result = m_pNodeManager->addNodeAndReference(this, pTwoStateVar, OpcUaId_HasComponent);
 
-    return m_pNodeManager->addNodeAndReference(this, pTwoStateVar, OpcUaId_HasComponent);
-}
+    }
+    // Multi State Variable
+    else if (auto* pMultiStateType = dynamic_cast<OpcUa::MultiStateDiscreteType*>(pInstanceDeclaration)) {
+        
+        OpcUa::MultiStateDiscreteType * pMultiStateVar = new OpcUa::MultiStateDiscreteType(
+            this,
+            pInstanceDeclaration,
+            m_pNodeManager,
+            m_pSharedMutex
+        );
 
-UaStatus IocBasicObject::addMultiStateVariable(const int typeIdVar) {
-    
-    UaVariable* pInstanceDeclaration;
-    OpcUa::MultiStateDiscreteType* pMultiStateVar;
+        UaLocalizedTextArray enumStrings;
+        pMultiStateType->getEnumStrings(enumStrings);
+        pMultiStateVar->setEnumStrings(enumStrings);
 
-    pInstanceDeclaration = m_pNodeManager->getInstanceDeclarationVariable(typeIdVar);
-    UA_ASSERT(pInstanceDeclaration!=NULL);
-    pMultiStateVar = new OpcUa::MultiStateDiscreteType(
-        this,
-        pInstanceDeclaration,
-        m_pNodeManager,
-        m_pSharedMutex
-    );
+        result = m_pNodeManager->addNodeAndReference(this, pMultiStateVar, OpcUaId_HasComponent);
+    }
+    // Error, unknown type
+    else {
 
-    OpcUa::MultiStateDiscreteType * pMultiStateType = dynamic_cast<OpcUa::MultiStateDiscreteType*>(pInstanceDeclaration);
-    UaLocalizedTextArray enumStrings;
-    pMultiStateType->getEnumStrings(enumStrings);
-    pMultiStateVar->setEnumStrings(enumStrings);
+        std::cerr << "Error: Unknown variable type" << std::endl;
+        result = OpcUa_BadInvalidArgument;
 
-    return m_pNodeManager->addNodeAndReference(this, pMultiStateVar, OpcUaId_HasComponent);
+    }
+
+    return result;
 }
 
 OpcUa_Byte IocBasicObject::eventNotifier() const { return OpcUa_Byte(); }
