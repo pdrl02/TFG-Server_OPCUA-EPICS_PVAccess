@@ -28,6 +28,9 @@
 # If using the sequencer, point SNCSEQ at its top directory:
 #SNCSEQ = $(MODULES)/seq-ver
 
+# Add path to pvxs
+PVXS = /home/pdrl/TFG-Server_OPCUA-EPICS_PVAccess/libs/pvxs
+
 # EPICS_BASE should appear last so earlier modules can override stuff:
 EPICS_BASE = /home/pdrl/TFG-Server_OPCUA-EPICS_PVAccess/libs/base-7.0.8.1
 

@@ -18,12 +18,11 @@ Ejemplo2_DBD += base.dbd
 # Include dbd files from all support applications:
 #Ejemplo2_DBD += xxx.dbd
 
-# Include dbd files for qsrv server and PVAccess
-Ejemplo2_DBD += PVAServerRegister.dbd
-Ejemplo2_DBD += qsrv.dbd
+# Include dbd files for qsrv2 
+Ejemplo2_DBD += pvxsIoc.dbd
 
 # Add libraries for qsrv server and PVAccess
-Ejemplo2_LIBS += qsrv
+Ejemplo2_LIBS += pvxs pvxsIoc
 Ejemplo2_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
 
 # Add all the support libraries needed by this IOC
