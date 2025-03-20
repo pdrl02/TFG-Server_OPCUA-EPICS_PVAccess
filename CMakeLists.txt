@@ -60,7 +60,7 @@ add_executable(Prueba
     ${SRC_DIR}/main.cpp
     # App
     ${SRC_DIR}/app/myNodeIOEventManager.cpp
-    ${SRC_DIR}/app/EPICSClient.cpp
+    ${SRC_DIR}/app/EPICStoOPCUAGateway.cpp
     # Utilities
     ${SRC_DIR}/utilities/opcserver.cpp
     ${SRC_DIR}/utilities/shutdown.cpp

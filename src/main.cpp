@@ -6,7 +6,6 @@
 #include <iostream>
 #include <string.h>
 
-#include <EPICSClient.h>
 #include <myNodeIOEventManager.h>
 #include <typeIDs.h>
 

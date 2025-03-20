@@ -330,6 +330,7 @@ UaVariable * MyNodeIOEventManager::getInstanceDeclarationVariable(OpcUa_UInt32 n
     
 }
 
+// Return a vector with all variables of a object type
 // Thread unsafe require     m_mutexNodes.lock();
 std::vector<UaVariable*> MyNodeIOEventManager::getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier){
     
