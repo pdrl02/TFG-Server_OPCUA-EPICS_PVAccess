@@ -46,6 +46,9 @@ private:
 
     void processQueue();
 
+    UaVariant convertValueToVariant(const Value & value);
+
+
 public:
     EPICStoOPCUAGateway(MyNodeIOEventManager * pNodeManager);
     ~EPICStoOPCUAGateway();
@@ -56,8 +59,7 @@ public:
 
     void stop();
 
-    UaVariant valueToVariant(const Value & value);
-
+    
 
 };
 
