@@ -59,6 +59,8 @@ public:
         const UaNodeId & parentNodeId               // Node of the parent;
     );
 
+    UaStatus updateVariable(UaNodeId & nodeId, UaVariant & variant);
+
     // NodeManagerUaNode implementation
     virtual UaStatus   afterStartUp();
     virtual UaStatus   beforeShutDown();
@@ -72,7 +74,7 @@ public:
                                     const UaByteString& EventId, const UaLocalizedText& Comment);
     
 
-    // Método para obtener los nodos de declaración de instancia
+    // Métodos para obtener los nodos de declaración de instancia
     UaVariable* getInstanceDeclarationVariable(OpcUa_UInt32 numericIdentifier);
     std::vector<UaVariable*> getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier);
 

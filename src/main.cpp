@@ -68,6 +68,9 @@ int OpcServerMain(const char* szAppPath)
         //--------------------------------------------------------------------------------------------------------------
 
         if ( ret == 0 ){
+            std::unique_ptr<EPICStoOPCUAGateway> pGateway = std::make_unique<EPICStoOPCUAGateway>(pMyNodeIOEventManager);
+            pServer->addEPICSGateway(std::move(pGateway));
+
             printf("***************************************************\n");
             printf(" Press %s to shut down server\n", SHUTDOWN_SEQUENCE);
             printf("***************************************************\n");
@@ -118,32 +121,32 @@ int OpcServerMain(const char* szAppPath)
 
 int main(int, char*[])
 {
-    // // Servidor OPC UA
-    // int ret = 0;
-    // RegisterSignalHandler();
-    // // Extract application path
-    // char* pszAppPath = getAppPath();
-    // //-------------------------------------------
-    // // Call the OPC server main method
-    // ret = OpcServerMain(pszAppPath);
-    // //-------------------------------------------
-    // if ( pszAppPath ) 
-    //     delete [] pszAppPath;
+    // Servidor OPC UA
+    int ret = 0;
+    RegisterSignalHandler();
+    // Extract application path
+    char* pszAppPath = getAppPath();
+    //-------------------------------------------
+    // Call the OPC server main method
+    ret = OpcServerMain(pszAppPath);
+    //-------------------------------------------
+    if ( pszAppPath ) 
+        delete [] pszAppPath;
 
-    // return ret;
+    return ret;
 
-    // Prueba de pvxs
-    using namespace pvxs;
+    // // Prueba de pvxs
+    // using namespace pvxs;
 
-    // Configure client using $EPICS_PVA_*
-    auto ctxt(client::Context::fromEnv());
+    // // Configure client using $EPICS_PVA_*
+    // auto ctxt(client::Context::fromEnv());
 
-    // fetch PV "some:pv:name" and wait up to 5 seconds for a reply.
-    // (throws an exception on error, including timeout)
-    Value reply = ctxt.get("ejemplo1:Temperature").exec()->wait(5.0);
+    // // fetch PV "some:pv:name" and wait up to 5 seconds for a reply.
+    // // (throws an exception on error, including timeout)
+    // Value reply = ctxt.get("ejemplo1:Temperature").exec()->wait(5.0);
 
-    // Reply is printed to stdout.
-    std::cout<<reply;
+    // // Reply is printed to stdout.
+    // std::cout<<reply;
 
     return 0;
     

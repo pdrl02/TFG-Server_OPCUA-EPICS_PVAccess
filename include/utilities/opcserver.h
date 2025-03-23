@@ -32,7 +32,8 @@
 
 #include "uaserverapplication.h"
 #include "myNodeIOEventManager.h"
-
+#include <memory>
+#include <EPICStoOPCUAGateway.h>
 class UaServer;
 
 /** Main OPC Server object.
@@ -53,8 +54,13 @@ public:
 
     virtual MyNodeIOEventManager * getMyNodeIOEventManager();
 
+    virtual void addEPICSGateway(std::unique_ptr<EPICStoOPCUAGateway> gate);
+
 protected:
     virtual UaStatus afterStartUp();
+
+private:
+    std::unique_ptr<EPICStoOPCUAGateway> m_gateway;
 };
 
 

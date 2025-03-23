@@ -47,6 +47,8 @@ OpcServer::OpcServer(int argc, char* argv[], bool bRunAsService, const UaString 
 /** Destruction. */
 OpcServer::~OpcServer()
 {
+    m_gateway->stop();
+    
     if ( isStarted() != OpcUa_False )
     {
         UaLocalizedText reason("en","Application shut down");
@@ -147,4 +149,9 @@ OpcUa_DateTime OpcServer::getBuildDate() const
 
 MyNodeIOEventManager* OpcServer::getMyNodeIOEventManager() { 
     return static_cast<MyNodeIOEventManager*>(getDefaultNodeManager()); 
+}
+
+void OpcServer::addEPICSGateway(std::unique_ptr<EPICStoOPCUAGateway>gate) {
+    m_gateway = std::move(gate);
+    m_gateway->start();
 }

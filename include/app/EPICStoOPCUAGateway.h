@@ -59,8 +59,6 @@ public:
 
     void stop();
 
-    
-
 };
 
 #endif  // __EPICSTOOPCUAGATEWAY_H__

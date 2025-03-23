@@ -180,6 +180,29 @@ UaStatus MyNodeIOEventManager::createObject(
     return result;
 }
 
+UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &variant) {
+
+    UaNode * pNode = getNode(nodeId);
+    if(!pNode){
+        return UaStatus(OpcUa_BadNodeIdUnknown);
+    }
+
+    UaVariable * pVariable = dynamic_cast<UaVariable*>(pNode);
+    if(!pVariable){
+        return UaStatus(OpcUa_BadNodeIdRejected);
+    }
+
+    UaDateTime sourceTimestamp = UaDateTime::now();
+    UaDateTime serverTimestamp = UaDateTime::now();    
+
+    OpcUa_Double val;
+    variant.toDouble(val);
+    std::cout << "Variant: " << val << std::endl;
+
+    UaDataValue dataValue(variant, OpcUa_Good, sourceTimestamp, serverTimestamp);
+    return pVariable->setValue(NULL, dataValue, OpcUa_True );
+}
+
 // Esta función se llama cuando el NodeManager está creado e inicializado.
 // Aquí creamos nuestros UaNodes. Nosotros llamamos a createTypeNodes para crear nuestro Type Model
 UaStatus MyNodeIOEventManager::afterStartUp(){
@@ -286,6 +309,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     createObject("obj2.1", TFG_IOC_Ejemplo2, UaNodeId("obj2.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
     createObject("obj2.2", TFG_IOC_Ejemplo2, UaNodeId("obj2.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
     createObject("obj3.1", TFG_IOC_Ejemplo3, UaNodeId("obj3.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+
+
 
     
     return UaStatus();  
