@@ -34,11 +34,13 @@ private:
 
     Context m_pvxsContext;
 
+    vector<shared_ptr<Subscription>> m_subcriptions;
+
     MyNodeIOEventManager * m_pNodeManager;
 
     unordered_map<string, PVMapping> m_pvMap;
 
-    const int m_numThreads = 4;
+    const int m_numThreads = 1;
 
     vector<thread> m_workerThreads;
 

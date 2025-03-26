@@ -8,6 +8,7 @@ void EPICStoOPCUAGateway::processQueue() {
         cout << "Soy: " << this_thread::get_id() << " y he llegado a proccessQueue." << endl;
         // Obtener el siguiente elemento de la cola
         auto item = m_workQueue.pop();
+        cout << "Salgo de m_workQueue.pop() " << endl;
 
         // Introducimos "" en el nombre como centinela para parar el hilo
         if(!m_running && item.first.empty())
@@ -21,9 +22,9 @@ void EPICStoOPCUAGateway::processQueue() {
             if(it != m_pvMap.end()){
                 cout << "Thread nº " << this_thread::get_id << ": Ejecutando función processQueue" << endl;
                 // Convertir dato de epics a opcua
-                UaVariant variant = convertValueToVariant(value);
+                //UaVariant variant = convertValueToVariant(value);
                 // Actualizar el valor en opcua
-                m_pNodeManager->updateVariable(it->second.nodeId, variant);
+                //m_pNodeManager->updateVariable(it->second.nodeId, variant);
             }
         } catch(exception e){
             cerr << "Error processing value change: " << e.what() << endl;
@@ -71,7 +72,7 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
 }
 
 EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
-    : m_pNodeManager(pNodeManager) {
+    : m_pNodeManager(pNodeManager) {    
 
     m_pvxsContext = Context(Config::from_env().build());
 
@@ -95,19 +96,26 @@ void EPICStoOPCUAGateway::start() {
 
         cout << pvMapping.nodeId.identifierString() << endl;
         cout << pvMapping.nodeId.namespaceIndex() << endl;
-
-        auto subscription = m_pvxsContext.monitor(pvMapping.epicsName)
-            .event([this, pvName](pvxs::client::Subscription & subscription){
-                cout << "Eventoooo: " << endl;    // Esto no va
-                try {
-                    auto value = subscription.pop();
-                    if(value.valid())
-                        m_workQueue.push(pair<string, Value>(pvName, value));
-                } catch (exception e){
-                    cerr << "Error in subscription for: " << pvName << endl;
-                    cerr << "Error type: " << e.what() << endl;
-                }
-            }).exec(); 
+        cout << pvMapping.epicsName << endl;
+        m_subcriptions.push_back(
+            m_pvxsContext.monitor(pvMapping.epicsName)
+                .event([this, pvName](pvxs::client::Subscription & subscription){
+                    cout << "Evento recibido para: " << subscription.name() << endl;    // Esto no va
+                    try {
+                        auto value = subscription.pop();
+                        if(value.valid()){
+                            cout << "Valor recibido" << endl;
+                            m_workQueue.push(pair<string, Value>(pvName, value));
+                        } else {
+                            cout << "Valor invalido para" << pvName << endl;
+                        }
+                    } catch (exception e){
+                        cerr << "Error in subscription for: " << pvName << endl;
+                        cerr << "Error type: " << e.what() << endl;
+                    }
+                    
+                }).exec()
+        );
     }
 
     // Iniciar los hilos de procesamiento
