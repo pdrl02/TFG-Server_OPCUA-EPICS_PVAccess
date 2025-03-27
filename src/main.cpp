@@ -36,16 +36,16 @@ int OpcServerMain(const char* szAppPath)
         //-------------------------------------------
         // Create and initialize server object
         OpcServer* pServer = new OpcServer;
-        pServer->setServerConfig(sConfigFileName, szAppPath);
+        ret = pServer->setServerConfig(sConfigFileName, szAppPath);
 
         // Add NodeManager for the server specific nodes
         MyNodeIOEventManager *pMyNodeIOEventManager = new MyNodeIOEventManager();
-        pServer->addNodeManager(pMyNodeIOEventManager);
+        ret = pServer->addNodeManager(pMyNodeIOEventManager);
 
         // Start server object
         ret = pServer->start();
         if ( ret != 0 ){
-            std::cout << "Error: " << ret << std::endl;
+            std::cout << "Error al iniciar el servidor: " << ret << std::endl;
             delete pServer;
             pServer = 0;
         }

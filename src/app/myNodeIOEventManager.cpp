@@ -309,10 +309,7 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     createObject("obj2.1", TFG_IOC_Ejemplo2, UaNodeId("obj2.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
     createObject("obj2.2", TFG_IOC_Ejemplo2, UaNodeId("obj2.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
     createObject("obj3.1", TFG_IOC_Ejemplo3, UaNodeId("obj3.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-
-
-
-    
+       
     return UaStatus();  
 }
 

@@ -60,7 +60,7 @@ protected:
     virtual UaStatus afterStartUp();
 
 private:
-    std::unique_ptr<EPICStoOPCUAGateway> m_gateway;
+    std::unique_ptr<EPICStoOPCUAGateway> m_gateway = nullptr;
 };
 
 

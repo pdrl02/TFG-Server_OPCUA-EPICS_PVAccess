@@ -47,7 +47,8 @@ OpcServer::OpcServer(int argc, char* argv[], bool bRunAsService, const UaString 
 /** Destruction. */
 OpcServer::~OpcServer()
 {
-    m_gateway->stop();
+    if(m_gateway != nullptr)
+        m_gateway->stop();
     
     if ( isStarted() != OpcUa_False )
     {

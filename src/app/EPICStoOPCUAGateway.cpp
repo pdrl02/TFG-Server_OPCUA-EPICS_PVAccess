@@ -4,54 +4,34 @@
 // Lo que ejecuta el hilo de procesamiento, es decir, los hilos consumidores los workers 
 void EPICStoOPCUAGateway::processQueue() {
 
-    while(m_running){
+    while(m_running.load()){
         cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
         // Obtener el siguiente elemento de la cola
         auto sub = m_workQueue.pop();
-        try{
-            cout << "Salgo de m_workQueue.pop() " << endl;
-            Value value = sub->pop();
-            if(!value)
-                continue;
-            
-            cout << sub->name() << endl;
-            auto it = m_pvMap.find(sub->name());
-            if(it != m_pvMap.end()){
-                cout << "Llego a actualizar la variable" << endl;
-                // Convert data from EPICS to OPC UA
-                UaVariant variant = convertValueToVariant(value);
-                // Update value in server
-                m_pNodeManager->updateVariable(it->second.nodeId, variant);
+        if(sub){
+            try{
+                cout << "Salgo de m_workQueue.pop() " << endl;
+                Value value = sub->pop();
+                if(!value)
+                    continue;
+                
+                cout << sub->name() << endl;
+                auto it = m_pvMap.find(sub->name());
+                if(it != m_pvMap.end()){
+                    cout << "Llego a actualizar la variable" << endl;
+                    // Convert data from EPICS to OPC UA
+                    UaVariant variant = convertValueToVariant(value);
+                    // Update value in server
+                    m_pNodeManager->updateVariable(it->second.nodeId, variant);
+                }
+
+
+            } catch (exception e) {
+                cerr << "Error: " << e.what() << endl;
             }
-
-
-        } catch (exception e) {
-            cerr << "Error: " << e.what() << endl;
+            m_workQueue.push(sub);
         }
-        m_workQueue.push(sub);
         
-
-        // // Introducimos "" en el nombre como centinela para parar el hilo
-        // if(!m_running && item.first.empty())
-        //     break;
-
-        // try {
-        //     const auto & pvName = item.first;
-        //     const auto & value = item.second;
-
-        //     auto it = m_pvMap.find(pvName);
-        //     if(it != m_pvMap.end()){
-        //         cout << "Thread nº " << this_thread::get_id << ": Ejecutando función processQueue" << endl;
-        //         // Convertir dato de epics a opcua
-        //         //UaVariant variant = convertValueToVariant(value);
-        //         // Actualizar el valor en opcua
-        //         //m_pNodeManager->updateVariable(it->second.nodeId, variant);
-        //     }
-        // } catch(exception e){
-        //     cerr << "Error processing value change: " << e.what() << endl;
-        //     cerr << "Possible data inconsistency between the IOC and the server" << endl;
-        // }
-
     }
 }
 
@@ -60,39 +40,23 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     
     UaVariant variant;
     try {
-        cout << "LLegamos a converValueToVariant" << endl;
-        cout << value << endl;
-        switch(value.lookup("value").type().code){
+        TypeCode::code_t code = value.lookup("value").type().code;
+        Value valueField = value.lookup("value");
+        switch(code){
             case TypeCode::Bool:
-                cout << value.as<bool>() << endl;
-                variant.setBool(value.as<bool>());
+                variant.setBool(valueField.as<bool>());
                 break;
             
             case TypeCode::Float64:
-                cout << value.as<double>() << endl;
-                variant.setDouble(value.as<double>());
+                variant.setDouble(valueField.as<double>());
                 break;
 
             case TypeCode::Int32:
-                cout << value.as<int32_t>() << endl;
-                variant.setInt32(value.as<int32_t>());
+                variant.setInt32(valueField.as<int32_t>());
                 break;
 
             case TypeCode::Int64:
-                cout << value.as<int64_t>() << endl;
-                variant.setInt64(value.as<int64_t>());
-                break;
-
-            case TypeCode::Struct:
-                switch(value.lookup("value").type().code){
-                    case TypeCode::Float64:
-                        cout << "florat" << endl;
-                        cout << "Nombre:" << value.lookup("value").type().name() << endl;
-                        break;
-                    default:
-                        cout << "Nada" << endl;
-                }
-                //cout << value.as<double>() << endl;
+                variant.setInt64(valueField.as<int64_t>());
                 break;
 
             default:
@@ -115,7 +79,9 @@ EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
     m_pvMap.insert(pair<string, PVMapping>("ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex()))));
 }
 
-EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {}
+EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {
+    //stop();
+}
 
 void EPICStoOPCUAGateway::addMapping(const string& pvName, const UaNodeId& nodeId) {
     pair<string, PVMapping> in(pvName, PVMapping(pvName, nodeId));
@@ -124,7 +90,7 @@ void EPICStoOPCUAGateway::addMapping(const string& pvName, const UaNodeId& nodeI
 
 void EPICStoOPCUAGateway::start() {
     
-    m_running = true;
+    m_running.store(true);
 
     // Subscribirse a cada PV de los IOC.
     // Deben estar las variables en m_pvMap
@@ -146,7 +112,8 @@ void EPICStoOPCUAGateway::start() {
 }
 
 void EPICStoOPCUAGateway::stop() {
-    m_running = false;
+    
+    m_running.store(false);
 
     // Señales para terminar los hilos
     for(int i = 0; i < m_numThreads; ++i){
