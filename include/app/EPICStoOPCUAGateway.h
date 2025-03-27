@@ -30,7 +30,7 @@ class EPICStoOPCUAGateway {
 
 private:
     
-    MPMCFIFO<pair<string, Value>> m_workQueue{100};
+    MPMCFIFO<shared_ptr<Subscription>> m_workQueue{100};
 
     Context m_pvxsContext;
 

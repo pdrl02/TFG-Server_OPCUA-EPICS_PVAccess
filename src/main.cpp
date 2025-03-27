@@ -143,10 +143,34 @@ int main(int, char*[])
 
     // // fetch PV "some:pv:name" and wait up to 5 seconds for a reply.
     // // (throws an exception on error, including timeout)
-    // Value reply = ctxt.get("ejemplo1:Temperature").exec()->wait(5.0);
+    // //Value reply = ctxt.get("ejemplo1:Temperature").exec()->wait(5.0);
+    
+    // MPMCFIFO<std::shared_ptr<Subscription>> workqueue(42u);
 
-    // // Reply is printed to stdout.
-    // std::cout<<reply;
+    // auto sub = ctxt.monitor("ejemplo1:Temperature")
+    //             .event([&workqueue](Subscription& sub) {
+    //                 // Subscription queue becomes not empty.
+    //                 // Avoid I/O on PVXS worker thread,
+    //                 // delegate to application thread
+    //                 workqueue.push(sub.shared_from_this());
+    //             })
+    //             .exec();
+
+    // while(auto sub = workqueue.pop()) { // could workqueue.push(nullptr) to break
+    //     try {
+    //         Value update = sub->pop();
+    //         cout << sub->name() << endl;
+    //         if(!update)
+    //             continue; // Subscription queue empty, wait for another event callback
+    //         std::cout<<update<<"\n";
+    //     } catch(std::exception& e) {
+    //         // may be Connected(), Disconnect(), Finished(), or RemoteError()
+    //         std::cerr<<"Error "<<e.what()<<"\n";
+    //     }
+    //     // queue not empty, reschedule
+    //     workqueue.push(sub);
+    // }
+    // // store op until completion
 
     return 0;
     

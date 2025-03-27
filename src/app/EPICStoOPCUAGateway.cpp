@@ -5,31 +5,52 @@
 void EPICStoOPCUAGateway::processQueue() {
 
     while(m_running){
-        cout << "Soy: " << this_thread::get_id() << " y he llegado a proccessQueue." << endl;
+        cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
         // Obtener el siguiente elemento de la cola
-        auto item = m_workQueue.pop();
-        cout << "Salgo de m_workQueue.pop() " << endl;
-
-        // Introducimos "" en el nombre como centinela para parar el hilo
-        if(!m_running && item.first.empty())
-            break;
-
-        try {
-            const auto & pvName = item.first;
-            const auto & value = item.second;
-
-            auto it = m_pvMap.find(pvName);
+        auto sub = m_workQueue.pop();
+        try{
+            cout << "Salgo de m_workQueue.pop() " << endl;
+            Value value = sub->pop();
+            if(!value)
+                continue;
+            
+            cout << sub->name() << endl;
+            auto it = m_pvMap.find(sub->name());
             if(it != m_pvMap.end()){
-                cout << "Thread nº " << this_thread::get_id << ": Ejecutando función processQueue" << endl;
-                // Convertir dato de epics a opcua
-                //UaVariant variant = convertValueToVariant(value);
-                // Actualizar el valor en opcua
-                //m_pNodeManager->updateVariable(it->second.nodeId, variant);
+                cout << "Llego a actualizar la variable" << endl;
+                // Convert data from EPICS to OPC UA
+                UaVariant variant = convertValueToVariant(value);
+                // Update value in server
+                m_pNodeManager->updateVariable(it->second.nodeId, variant);
             }
-        } catch(exception e){
-            cerr << "Error processing value change: " << e.what() << endl;
-            cerr << "Possible data inconsistency between the IOC and the server" << endl;
+
+
+        } catch (exception e) {
+            cerr << "Error: " << e.what() << endl;
         }
+        m_workQueue.push(sub);
+        
+
+        // // Introducimos "" en el nombre como centinela para parar el hilo
+        // if(!m_running && item.first.empty())
+        //     break;
+
+        // try {
+        //     const auto & pvName = item.first;
+        //     const auto & value = item.second;
+
+        //     auto it = m_pvMap.find(pvName);
+        //     if(it != m_pvMap.end()){
+        //         cout << "Thread nº " << this_thread::get_id << ": Ejecutando función processQueue" << endl;
+        //         // Convertir dato de epics a opcua
+        //         //UaVariant variant = convertValueToVariant(value);
+        //         // Actualizar el valor en opcua
+        //         //m_pNodeManager->updateVariable(it->second.nodeId, variant);
+        //     }
+        // } catch(exception e){
+        //     cerr << "Error processing value change: " << e.what() << endl;
+        //     cerr << "Possible data inconsistency between the IOC and the server" << endl;
+        // }
 
     }
 }
@@ -40,7 +61,8 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     UaVariant variant;
     try {
         cout << "LLegamos a converValueToVariant" << endl;
-        switch(value.type().code){
+        cout << value << endl;
+        switch(value.lookup("value").type().code){
             case TypeCode::Bool:
                 cout << value.as<bool>() << endl;
                 variant.setBool(value.as<bool>());
@@ -61,12 +83,26 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
                 variant.setInt64(value.as<int64_t>());
                 break;
 
+            case TypeCode::Struct:
+                switch(value.lookup("value").type().code){
+                    case TypeCode::Float64:
+                        cout << "florat" << endl;
+                        cout << "Nombre:" << value.lookup("value").type().name() << endl;
+                        break;
+                    default:
+                        cout << "Nada" << endl;
+                }
+                //cout << value.as<double>() << endl;
+                break;
+
             default:
                 cerr << "Error converting EPICS Value to OPCUA Variant" << endl;
+                cerr << "Unknown TypeCode" << endl;
                 break;
         }
     } catch(exception e){
         cerr << "Error converting EPICS Value to OPCUA Variant" << endl;
+        cerr << e.what() << endl;
     }   
     return variant;
 }
@@ -76,7 +112,7 @@ EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
 
     m_pvxsContext = Context(Config::from_env().build());
 
-    m_pvMap.insert(pair<string, PVMapping>("obj1.1.Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex()))));
+    m_pvMap.insert(pair<string, PVMapping>("ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex()))));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {}
@@ -94,26 +130,10 @@ void EPICStoOPCUAGateway::start() {
     // Deben estar las variables en m_pvMap
     for(const auto & [pvName, pvMapping] : m_pvMap){
 
-        cout << pvMapping.nodeId.identifierString() << endl;
-        cout << pvMapping.nodeId.namespaceIndex() << endl;
-        cout << pvMapping.epicsName << endl;
         m_subcriptions.push_back(
             m_pvxsContext.monitor(pvMapping.epicsName)
-                .event([this, pvName](pvxs::client::Subscription & subscription){
-                    cout << "Evento recibido para: " << subscription.name() << endl;    // Esto no va
-                    try {
-                        auto value = subscription.pop();
-                        if(value.valid()){
-                            cout << "Valor recibido" << endl;
-                            m_workQueue.push(pair<string, Value>(pvName, value));
-                        } else {
-                            cout << "Valor invalido para" << pvName << endl;
-                        }
-                    } catch (exception e){
-                        cerr << "Error in subscription for: " << pvName << endl;
-                        cerr << "Error type: " << e.what() << endl;
-                    }
-                    
+                .event([this](pvxs::client::Subscription & subscription){
+                   m_workQueue.push(subscription.shared_from_this());
                 }).exec()
         );
     }
@@ -130,7 +150,7 @@ void EPICStoOPCUAGateway::stop() {
 
     // Señales para terminar los hilos
     for(int i = 0; i < m_numThreads; ++i){
-        m_workQueue.push(pair<string, Value>("", Value()));
+        m_workQueue.push(nullptr);
     }
 
     // Join a los hilos
