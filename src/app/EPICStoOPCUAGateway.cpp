@@ -4,34 +4,23 @@
 // Lo que ejecuta el hilo de procesamiento, es decir, los hilos consumidores los workers 
 void EPICStoOPCUAGateway::processQueue() {
 
+    GatewayHandler handler(this);
+
     while(m_running.load()){
         cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
         // Obtener el siguiente elemento de la cola
-        auto sub = m_workQueue.pop();
-        if(sub){
+        auto pEvent = m_workQueue.pop();
+        if(pEvent){
             try{
-                cout << "Salgo de m_workQueue.pop() " << endl;
-                Value value = sub->pop();
-                if(!value)
-                    continue;
-                
-                cout << sub->name() << endl;
-                auto it = m_pvMap.find(sub->name());
-                if(it != m_pvMap.end()){
-                    cout << "Llego a actualizar la variable" << endl;
-                    // Convert data from EPICS to OPC UA
-                    UaVariant variant = convertValueToVariant(value);
-                    // Update value in server
-                    m_pNodeManager->updateVariable(it->second.nodeId, variant);
-                }
-
-
+                std::visit(handler, *pEvent);
+                //if(m_running.load())
+                //    m_workQueue.push(pEvent);
             } catch (exception e) {
-                cerr << "Error: " << e.what() << endl;
+                cerr << "Error processing event: " << e.what() << endl;
+                //if(m_running.load())
+                //    m_workQueue.push(pEvent);
             }
-            m_workQueue.push(sub);
         }
-        
     }
 }
 
@@ -71,21 +60,32 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     return variant;
 }
 
+Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& dataValue) {
+
+    UaVariant variant(*dataValue.value());
+    Value value;
+    try {
+        switch (variant.type()){
+        case OpcUa_BuiltInType::OpcUaType_Boolean:
+            value = nt::NTScalar
+            /* code */
+            break;
+        
+        default:
+            break;
+        }
+    }
+}
+
 EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
     : m_pNodeManager(pNodeManager) {    
 
     m_pvxsContext = Context(Config::from_env().build());
-
-    m_pvMap.insert(pair<string, PVMapping>("ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex()))));
+    addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex())));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {
     //stop();
-}
-
-void EPICStoOPCUAGateway::addMapping(const string& pvName, const UaNodeId& nodeId) {
-    pair<string, PVMapping> in(pvName, PVMapping(pvName, nodeId));
-    m_pvMap.insert(in);
 }
 
 void EPICStoOPCUAGateway::start() {
@@ -94,12 +94,13 @@ void EPICStoOPCUAGateway::start() {
 
     // Subscribirse a cada PV de los IOC.
     // Deben estar las variables en m_pvMap
-    for(const auto & [pvName, pvMapping] : m_pvMap){
+    for(const auto & [pvName, pvMapping] : m_pvMap_Name){
 
         m_subcriptions.push_back(
             m_pvxsContext.monitor(pvMapping.epicsName)
                 .event([this](pvxs::client::Subscription & subscription){
-                   m_workQueue.push(subscription.shared_from_this());
+                    auto eventSub = make_shared<GatewayEvent>(subscription.shared_from_this());
+                    m_workQueue.push(eventSub);
                 }).exec()
         );
     }
@@ -127,4 +128,57 @@ void EPICStoOPCUAGateway::stop() {
     
     
     m_workerThreads.clear();
+}
+
+void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value) {
+    
+    auto it = m_pvMap_UaNode.find(variable->nodeId());
+    
+}
+
+bool EPICStoOPCUAGateway::addMapping(const string& name, const PVMapping& pvMapping) {
+    auto result = m_pvMap_Name.emplace(name, pvMapping);
+    if (result.second) {
+        m_pvMap_UaNode.emplace(pvMapping.nodeId, pvMapping);
+        return true;  
+    }
+    return false;
+}
+
+void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & subscription) const {
+    if(subscription){
+        try{
+            cout << "Salgo de m_workQueue.pop() " << endl;
+            Value value = subscription->pop();
+            if(!value)
+                return;
+            
+            cout << subscription->name() << endl;
+            auto it = m_self->m_pvMap_Name.find(subscription->name());
+            if(it != m_self->m_pvMap_Name.end()){
+                cout << "Llego a actualizar la variable" << endl;
+                // Convert data from EPICS to OPC UA
+                UaVariant variant = m_self->convertValueToVariant(value);
+                // Update value in server
+                m_self->m_pNodeManager->updateVariable(it->second.nodeId, variant);
+            }
+
+
+        } catch (exception e) {
+            cerr << "Error: " << e.what() << endl;
+        }
+        m_self->m_workQueue.push(make_shared<GatewayEvent>(subscription));
+    }
+}
+
+void EPICStoOPCUAGateway::GatewayHandler::operator()(PutRequest& putRequest) const {
+    if(putRequest.variable != nullptr){
+        try {
+            cout << "Procesando put request" << endl;
+    
+        } catch (exception e) {
+            cerr << "Error in input request handler: " << e.what() << endl;
+        }
+        m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
+    }
 }

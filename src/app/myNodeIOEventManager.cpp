@@ -325,9 +325,12 @@ UaStatus MyNodeIOEventManager::readValues(const UaVariableArray &arrUaVariables,
     return UaStatus();
 }
 
-UaStatus MyNodeIOEventManager::writeValues(const UaVariableArray &arrUaVariables, const PDataValueArray &arrpDataValues, UaStatusCodeArray &arrStatusCodes)
-{
-    return UaStatus();
+UaStatus MyNodeIOEventManager::writeValues(
+    const UaVariableArray &arrUaVariables, 
+    const PDataValueArray &arrpDataValues, 
+    UaStatusCodeArray &arrStatusCodes){
+
+    
 }
 
 UaStatus MyNodeIOEventManager::OnAcknowledge(
