@@ -36,6 +36,7 @@ UaStatus IocBasicObject::addVariable(const int typeIdVar) {
             m_pNodeManager,
             m_pSharedMutex
         );
+        //pAnalogVar->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////
         pAnalogVar->setEngineeringUnits(pAnalogType->getEngineeringUnits());
         pAnalogVar->setEURange(pAnalogType->getEURange());
         pAnalogVar->setInstrumentRange(pAnalogType->getInstrumentRange());

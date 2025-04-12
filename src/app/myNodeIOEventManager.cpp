@@ -11,6 +11,8 @@
 #include <typeIDs.h>
 #include <iocBasicObject.h>
 
+#include <EPICStoOPCUAGateway.h>
+
 /**
  * Crea un type model especifico para el servidor. Se hace definiendo y añadiendo TypeNode al 
  * espacio de direcciones del servidor. TypeNode representan ObjectTypes, es decir, tipos de objetos,
@@ -23,7 +25,7 @@ UaStatus MyNodeIOEventManager::createTypeNodes()
 }
 
 MyNodeIOEventManager::MyNodeIOEventManager()
-    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True) {
+    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True){
 
     std::cout << "Constructor del servidor..." << std::endl;
     //m_defaultLocaleId = "en";
@@ -79,6 +81,7 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
         (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
     pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
+    pBaseAnalogType->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////////////////
     result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
     UA_ASSERT(result.isGood());
 
@@ -201,6 +204,10 @@ UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &varia
 
     UaDataValue dataValue(variant, OpcUa_Good, sourceTimestamp, serverTimestamp);
     return pVariable->setValue(NULL, dataValue, OpcUa_True );
+}
+
+void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway * pEPICSGateway) {
+    m_pEPICSGateway = pEPICSGateway;
 }
 
 // Esta función se llama cuando el NodeManager está creado e inicializado.
@@ -330,6 +337,14 @@ UaStatus MyNodeIOEventManager::writeValues(
     const PDataValueArray &arrpDataValues, 
     UaStatusCodeArray &arrStatusCodes){
 
+    for(int i = 0; i < arrUaVariables.length(); ++i){
+        UaVariable * pVariable = arrUaVariables[i];
+        UaDataValue dataValue(*arrpDataValues[i]);
+
+        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue);
+    }
+
+    return UaStatus();
     
 }
 

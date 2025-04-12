@@ -5,6 +5,8 @@
 #include "uaeuinformation.h"
 #include "uarange.h"
 
+class EPICStoOPCUAGateway;
+
 class MyNodeIOEventManager : public NodeManagerBase
 {
     // Desabilita el constructor de copia y el operador de asignación
@@ -12,6 +14,9 @@ class MyNodeIOEventManager : public NodeManagerBase
 
 
 private:
+
+    EPICStoOPCUAGateway * m_pEPICSGateway; 
+
     // Método para crear crear los TypeNode en el espacio de direcciones
     UaStatus createTypeNodes();
     
@@ -60,6 +65,8 @@ public:
     );
 
     UaStatus updateVariable(UaNodeId & nodeId, UaVariant & variant);
+
+    void setEPICSGateway(EPICStoOPCUAGateway * pEPICSGateway);
 
     // NodeManagerUaNode implementation
     virtual UaStatus   afterStartUp();

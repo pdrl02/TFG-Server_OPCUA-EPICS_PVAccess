@@ -20,12 +20,12 @@ using namespace pvxs::client;
 using namespace std;
 
 struct PutRequest {
-    UaVariable * variable;
+    const UaVariable * variable;
     UaDataValue value;
 
     PutRequest() = default;
 
-    PutRequest(UaVariable * var, UaDataValue val)
+    PutRequest(const UaVariable * var, UaDataValue val)
     : variable(var), value(val) {}
 
 };
@@ -54,9 +54,9 @@ private:
 
     MyNodeIOEventManager * m_pNodeManager;
 
-    unordered_map<string, PVMapping> m_pvMap_Name;
+    unordered_map<string, PVMapping> m_pvMapName;
 
-    map<UaNodeId, PVMapping> m_pvMap_UaNode;
+    map<UaNodeId, PVMapping> m_pvMapUaNode;
 
     const int m_numThreads = 1;
 

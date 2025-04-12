@@ -154,5 +154,6 @@ MyNodeIOEventManager* OpcServer::getMyNodeIOEventManager() {
 
 void OpcServer::addEPICSGateway(std::unique_ptr<EPICStoOPCUAGateway>gate) {
     m_gateway = std::move(gate);
+    getMyNodeIOEventManager()->setEPICSGateway(m_gateway.get());
     m_gateway->start();
 }

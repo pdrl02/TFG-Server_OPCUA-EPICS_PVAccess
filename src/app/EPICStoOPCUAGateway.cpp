@@ -66,22 +66,38 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     Value value;
     try {
         switch (variant.type()){
-        case OpcUa_BuiltInType::OpcUaType_Boolean:
-            value = nt::NTScalar
-            /* code */
-            break;
-        
-        default:
-            break;
+            case OpcUa_BuiltInType::OpcUaType_Boolean: {
+                OpcUa_Boolean opcuaBool;
+                variant.toBool(opcuaBool);
+                bool rawBool = !(opcuaBool != OpcUa_False);
+                value = nt::NTScalar{TypeCode::Bool}.create().update("value", rawBool);
+                break;
+            }
+
+            case OpcUa_BuiltInType::OpcUaType_Double: {
+                double doubleValue;
+                variant.toDouble(doubleValue);
+                value = nt::NTScalar{TypeCode::Float64}.create().update("value", doubleValue);
+                break;
+            }
+
+            default: {
+                cout <<"variant type:::::" << variant.type() << endl;
+                break;
+            }
         }
+    } catch(exception e){
+        cerr << "Error converting OPCUA Variant to EPICS Value" << endl;
+        cerr << e.what() << endl;
     }
+    return value;
 }
 
 EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
     : m_pNodeManager(pNodeManager) {    
 
     m_pvxsContext = Context(Config::from_env().build());
-    addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("obj1.1.Temperature", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("obj1.1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {
@@ -94,7 +110,7 @@ void EPICStoOPCUAGateway::start() {
 
     // Subscribirse a cada PV de los IOC.
     // Deben estar las variables en m_pvMap
-    for(const auto & [pvName, pvMapping] : m_pvMap_Name){
+    for(const auto & [pvName, pvMapping] : m_pvMapName){
 
         m_subcriptions.push_back(
             m_pvxsContext.monitor(pvMapping.epicsName)
@@ -132,14 +148,21 @@ void EPICStoOPCUAGateway::stop() {
 
 void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value) {
     
-    auto it = m_pvMap_UaNode.find(variable->nodeId());
+    auto it = m_pvMapUaNode.find(variable->nodeId());
+    if(it != m_pvMapUaNode.end()){
+        PutRequest request(variable, value);
+        auto eventPut = make_shared<GatewayEvent>(request);
+        m_workQueue.push(eventPut);
+    } else {
+        cerr << "Variable not found in the UaNodeId mapping." << endl;
+    }
     
 }
 
 bool EPICStoOPCUAGateway::addMapping(const string& name, const PVMapping& pvMapping) {
-    auto result = m_pvMap_Name.emplace(name, pvMapping);
+    auto result = m_pvMapName.emplace(name, pvMapping);
     if (result.second) {
-        m_pvMap_UaNode.emplace(pvMapping.nodeId, pvMapping);
+        m_pvMapUaNode.emplace(pvMapping.nodeId, pvMapping);
         return true;  
     }
     return false;
@@ -154,8 +177,8 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & 
                 return;
             
             cout << subscription->name() << endl;
-            auto it = m_self->m_pvMap_Name.find(subscription->name());
-            if(it != m_self->m_pvMap_Name.end()){
+            auto it = m_self->m_pvMapName.find(subscription->name());
+            if(it != m_self->m_pvMapName.end()){
                 cout << "Llego a actualizar la variable" << endl;
                 // Convert data from EPICS to OPC UA
                 UaVariant variant = m_self->convertValueToVariant(value);
