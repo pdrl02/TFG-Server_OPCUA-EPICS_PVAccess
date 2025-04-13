@@ -147,8 +147,8 @@ void EPICStoOPCUAGateway::stop() {
 }
 
 void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value) {
-    
-    auto it = m_pvMapUaNode.find(variable->nodeId());
+
+    auto it = m_pvMapUaNode.find(variable->nodeId().toXmlString().toUtf8());
     if(it != m_pvMapUaNode.end()){
         PutRequest request(variable, value);
         auto eventPut = make_shared<GatewayEvent>(request);
@@ -160,10 +160,11 @@ void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDa
 }
 
 bool EPICStoOPCUAGateway::addMapping(const string& name, const PVMapping& pvMapping) {
+
     auto result = m_pvMapName.emplace(name, pvMapping);
     if (result.second) {
-        m_pvMapUaNode.emplace(pvMapping.nodeId, pvMapping);
-        return true;  
+        auto result = m_pvMapUaNode.emplace(pvMapping.nodeId.toXmlString().toUtf8(), pvMapping);
+        return result.second;  
     }
     return false;
 }

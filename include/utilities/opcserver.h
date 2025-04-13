@@ -54,13 +54,16 @@ public:
 
     virtual MyNodeIOEventManager * getMyNodeIOEventManager();
 
-    virtual void addEPICSGateway(std::unique_ptr<EPICStoOPCUAGateway> gate);
+    virtual void addEPICSGateway(EPICStoOPCUAGateway * gate);
+
+    virtual void setMyNodeManager(MyNodeIOEventManager * pMyNodeManager);
 
 protected:
     virtual UaStatus afterStartUp();
 
 private:
-    std::unique_ptr<EPICStoOPCUAGateway> m_gateway = nullptr;
+    EPICStoOPCUAGateway * m_pGateway = nullptr;
+    MyNodeIOEventManager * m_pMyNodeManager = nullptr;
 };
 
 

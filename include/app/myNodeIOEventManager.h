@@ -4,6 +4,7 @@
 #include "nodemanagerbase.h"
 #include "uaeuinformation.h"
 #include "uarange.h"
+#include <memory>
 
 class EPICStoOPCUAGateway;
 
@@ -75,6 +76,8 @@ public:
     // IOManagerUaNode implementation
     virtual UaStatus readValues(const UaVariableArray &arrUaVariables, UaDataValueArray &arrDataValues);
     virtual UaStatus writeValues(const UaVariableArray &arrUaVariables, const PDataValueArray &arrpDataValues, UaStatusCodeArray &arrStatusCodes);
+
+    virtual void afterSetAttributeValue(Session * pSession, UaNode * pNode, OpcUa_Int32 attributeId, const UaDataValue & dataValue);
     
     // EventManagerUaNode implementation
     virtual UaStatus OnAcknowledge(const ServiceContext& serviceContext, OpcUa::AcknowledgeableConditionType* pCondition,

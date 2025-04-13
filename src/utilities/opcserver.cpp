@@ -47,8 +47,8 @@ OpcServer::OpcServer(int argc, char* argv[], bool bRunAsService, const UaString 
 /** Destruction. */
 OpcServer::~OpcServer()
 {
-    if(m_gateway != nullptr)
-        m_gateway->stop();
+    if(m_pGateway != nullptr)
+        m_pGateway->stop();
     
     if ( isStarted() != OpcUa_False )
     {
@@ -149,11 +149,16 @@ OpcUa_DateTime OpcServer::getBuildDate() const
 }
 
 MyNodeIOEventManager* OpcServer::getMyNodeIOEventManager() { 
-    return static_cast<MyNodeIOEventManager*>(getDefaultNodeManager()); 
+    return m_pMyNodeManager;
 }
 
-void OpcServer::addEPICSGateway(std::unique_ptr<EPICStoOPCUAGateway>gate) {
-    m_gateway = std::move(gate);
-    getMyNodeIOEventManager()->setEPICSGateway(m_gateway.get());
-    m_gateway->start();
+void OpcServer::setMyNodeManager(MyNodeIOEventManager * pMyNodeManager){
+    m_pMyNodeManager = pMyNodeManager;
+}
+
+void OpcServer::addEPICSGateway(EPICStoOPCUAGateway * gate) {
+    m_pGateway = gate;
+    getMyNodeIOEventManager()->setEPICSGateway(m_pGateway);
+    cout << "Todo bien" << endl;
+    m_pGateway->start();
 }

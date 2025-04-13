@@ -56,7 +56,7 @@ private:
 
     unordered_map<string, PVMapping> m_pvMapName;
 
-    map<UaNodeId, PVMapping> m_pvMapUaNode;
+    unordered_map<string, PVMapping> m_pvMapUaNode;
 
     const int m_numThreads = 1;
 

@@ -25,7 +25,7 @@ UaStatus MyNodeIOEventManager::createTypeNodes()
 }
 
 MyNodeIOEventManager::MyNodeIOEventManager()
-    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True){
+    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True) {
 
     std::cout << "Constructor del servidor..." << std::endl;
     //m_defaultLocaleId = "en";
@@ -81,7 +81,7 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
         (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
     pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
-    pBaseAnalogType->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////////////////
+    //pBaseAnalogType->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////////////////
     result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
     UA_ASSERT(result.isGood());
 
@@ -206,7 +206,7 @@ UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &varia
     return pVariable->setValue(NULL, dataValue, OpcUa_True );
 }
 
-void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway * pEPICSGateway) {
+void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway* pEPICSGateway) {
     m_pEPICSGateway = pEPICSGateway;
 }
 
@@ -327,11 +327,13 @@ UaStatus MyNodeIOEventManager::beforeShutDown()
     return UaStatus();
 }
 
+// borrar
 UaStatus MyNodeIOEventManager::readValues(const UaVariableArray &arrUaVariables, UaDataValueArray &arrDataValues)
 {
     return UaStatus();
 }
 
+//borrar 
 UaStatus MyNodeIOEventManager::writeValues(
     const UaVariableArray &arrUaVariables, 
     const PDataValueArray &arrpDataValues, 
@@ -345,6 +347,19 @@ UaStatus MyNodeIOEventManager::writeValues(
     }
 
     return UaStatus();
+    
+}
+
+void MyNodeIOEventManager::afterSetAttributeValue( Session *pSession, UaNode *pNode, OpcUa_Int32 attributeId, const UaDataValue &dataValue) {
+    
+    UaVariable* pVariable = nullptr;
+
+    if((pNode != NULL) && (pNode->nodeClass() == OpcUa_NodeClass_Variable))
+        pVariable = (UaVariable*) pNode;
+
+    if(m_pEPICSGateway != nullptr)
+        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue);
+    
     
 }
 

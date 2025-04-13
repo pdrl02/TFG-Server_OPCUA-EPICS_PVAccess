@@ -41,6 +41,7 @@ int OpcServerMain(const char* szAppPath)
         // Add NodeManager for the server specific nodes
         MyNodeIOEventManager *pMyNodeIOEventManager = new MyNodeIOEventManager();
         ret = pServer->addNodeManager(pMyNodeIOEventManager);
+        pServer->setMyNodeManager(pMyNodeIOEventManager);
 
         // Start server object
         ret = pServer->start();
@@ -68,8 +69,8 @@ int OpcServerMain(const char* szAppPath)
         //--------------------------------------------------------------------------------------------------------------
 
         if ( ret == 0 ){
-            std::unique_ptr<EPICStoOPCUAGateway> pGateway = std::make_unique<EPICStoOPCUAGateway>(pMyNodeIOEventManager);
-            pServer->addEPICSGateway(std::move(pGateway));
+            EPICStoOPCUAGateway * pGateway = new EPICStoOPCUAGateway (pMyNodeIOEventManager);
+            pServer->addEPICSGateway(pGateway);
 
             printf("***************************************************\n");
             printf(" Press %s to shut down server\n", SHUTDOWN_SEQUENCE);
