@@ -337,29 +337,41 @@ UaStatus MyNodeIOEventManager::readValues(const UaVariableArray &arrUaVariables,
 UaStatus MyNodeIOEventManager::writeValues(
     const UaVariableArray &arrUaVariables, 
     const PDataValueArray &arrpDataValues, 
-    UaStatusCodeArray &arrStatusCodes){
-
-    for(int i = 0; i < arrUaVariables.length(); ++i){
-        UaVariable * pVariable = arrUaVariables[i];
-        UaDataValue dataValue(*arrpDataValues[i]);
-
-        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue);
-    }
-
+    UaStatusCodeArray &arrStatusCodes)
+{
     return UaStatus();
-    
 }
 
-void MyNodeIOEventManager::afterSetAttributeValue( Session *pSession, UaNode *pNode, OpcUa_Int32 attributeId, const UaDataValue &dataValue) {
+OpcUa_Boolean MyNodeIOEventManager::beforeSetAttributeValue(
+    Session *pSession, 
+    UaNode *pNode, 
+    OpcUa_Int32 attributeId,
+    const UaDataValue &dataValue, 
+    OpcUa_Boolean &checkWriteMask
+) {
     
     UaVariable* pVariable = nullptr;
 
     if((pNode != NULL) && (pNode->nodeClass() == OpcUa_NodeClass_Variable))
         pVariable = (UaVariable*) pNode;
 
+    // Create promise and future
+    promise<bool> resultPromise;
+    future<bool> resultFuture = resultPromise.get_future();
+
     if(m_pEPICSGateway != nullptr)
-        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue);
-    
+        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue, resultPromise);
+    else
+        resultPromise.set_value(false);
+
+    auto result = resultFuture.wait_for(chrono::milliseconds(500));
+
+    if(result == future_status::ready && resultFuture.get())
+        return OpcUa_False;
+    else {
+        cerr << "Timeout in pvxs put operation. Cancelling write operation" << endl;
+        return OpcUa_False;
+    }
     
 }
 

@@ -15,7 +15,7 @@ void EPICStoOPCUAGateway::processQueue() {
                 std::visit(handler, *pEvent);
                 //if(m_running.load())
                 //    m_workQueue.push(pEvent);
-            } catch (exception e) {
+            } catch (const exception & e) {
                 cerr << "Error processing event: " << e.what() << endl;
                 //if(m_running.load())
                 //    m_workQueue.push(pEvent);
@@ -86,7 +86,7 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
                 break;
             }
         }
-    } catch(exception e){
+    } catch(const exception & e){
         cerr << "Error converting OPCUA Variant to EPICS Value" << endl;
         cerr << e.what() << endl;
     }
@@ -146,15 +146,18 @@ void EPICStoOPCUAGateway::stop() {
     m_workerThreads.clear();
 }
 
-void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value) {
+void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value, promise<bool> & resultPromise) {
 
     auto it = m_pvMapUaNode.find(variable->nodeId().toXmlString().toUtf8());
     if(it != m_pvMapUaNode.end()){
-        PutRequest request(variable, value);
+        auto request = std::make_shared<PutRequest>(variable, value);
+        // Move promise because it can not be copied
+        request->resultPromise = std::move(resultPromise);
         auto eventPut = make_shared<GatewayEvent>(request);
         m_workQueue.push(eventPut);
     } else {
         cerr << "Variable not found in the UaNodeId mapping." << endl;
+        resultPromise.set_value(false);
     }
     
 }
@@ -172,7 +175,7 @@ bool EPICStoOPCUAGateway::addMapping(const string& name, const PVMapping& pvMapp
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & subscription) const {
     if(subscription){
         try{
-            cout << "Salgo de m_workQueue.pop() " << endl;
+            cout << "Empieza Evento de monitoreo " << endl;
             Value value = subscription->pop();
             if(!value)
                 return;
@@ -195,14 +198,38 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & 
     }
 }
 
-void EPICStoOPCUAGateway::GatewayHandler::operator()(PutRequest& putRequest) const {
-    if(putRequest.variable != nullptr){
+void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & putRequest) const {
+    if(putRequest->variable != nullptr){
         try {
             cout << "Procesando put request" << endl;
+            auto it = m_self->m_pvMapUaNode.find(putRequest->variable->nodeId().toXmlString().toUtf8());
+            if(it != m_self->m_pvMapUaNode.end()){
+                // Conver tdata from OPC UA to EPICS
+                Value value = m_self->convertUaDataValueToPvxsValue(putRequest->dataValue);
+                // Update value in IOC
+                try{
+                    m_self->m_pvxsContext.put(it->second.epicsName)
+                    .set("value", value["value"])
+                    .exec()->wait(1);
+
+                    // Success
+                    putRequest->resultPromise.set_value(true);
+                } 
+                catch (const exception & e) {
+                    cerr << "Error in input request hadler: Error in pvxs put operation" << endl;
+                    cerr << e.what() << endl;
+                    putRequest->resultPromise.set_value(false);
+                }
+            }
+            else {
+                cerr << "Error in input request handler: Error finding mapped variable" << endl;
+                putRequest->resultPromise.set_value(false);
+            }
     
-        } catch (exception e) {
-            cerr << "Error in input request handler: " << e.what() << endl;
+        } catch (exception & e) {
+            cerr << "Error in input request handler." << endl << e.what() << endl;
+            putRequest->resultPromise.set_value(false);
         }
-        m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
+        //m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
     }
 }

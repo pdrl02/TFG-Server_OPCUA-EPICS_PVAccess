@@ -77,7 +77,13 @@ public:
     virtual UaStatus readValues(const UaVariableArray &arrUaVariables, UaDataValueArray &arrDataValues);
     virtual UaStatus writeValues(const UaVariableArray &arrUaVariables, const PDataValueArray &arrpDataValues, UaStatusCodeArray &arrStatusCodes);
 
-    virtual void afterSetAttributeValue(Session * pSession, UaNode * pNode, OpcUa_Int32 attributeId, const UaDataValue & dataValue);
+    OpcUa_Boolean beforeSetAttributeValue(
+        Session * pSession, 
+        UaNode * pNode, 
+        OpcUa_Int32 attributeId, 
+        const UaDataValue & dataValue,
+        OpcUa_Boolean & checkWriteMask
+    );	
     
     // EventManagerUaNode implementation
     virtual UaStatus OnAcknowledge(const ServiceContext& serviceContext, OpcUa::AcknowledgeableConditionType* pCondition,

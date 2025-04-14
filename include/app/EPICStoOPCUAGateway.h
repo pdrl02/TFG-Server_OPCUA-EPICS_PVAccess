@@ -14,6 +14,7 @@
 #include <uabasenodes.h>
 #include <uadatavalue.h>
 #include <pvxs/nt.h>
+#include <future>
 
 using namespace pvxs;
 using namespace pvxs::client;
@@ -21,16 +22,17 @@ using namespace std;
 
 struct PutRequest {
     const UaVariable * variable;
-    UaDataValue value;
+    UaDataValue dataValue;
+    promise<bool> resultPromise;
 
     PutRequest() = default;
 
     PutRequest(const UaVariable * var, UaDataValue val)
-    : variable(var), value(val) {}
+    : variable(var), dataValue(val) {}
 
 };
 
-using GatewayEvent = std::variant<shared_ptr<pvxs::client::Subscription>, PutRequest>;
+using GatewayEvent = std::variant<shared_ptr<pvxs::client::Subscription>, shared_ptr<PutRequest>>;
 
 struct PVMapping {
     string epicsName;
@@ -79,7 +81,7 @@ public:
 
     void stop();
 
-    void enqueuePutTask(const UaVariable * variable, const UaDataValue& value);
+    void enqueuePutTask(const UaVariable * variable, const UaDataValue& value, promise<bool> & resultPromise);
 
     bool addMapping(const string & name, const PVMapping & pvMapping);
 
@@ -93,7 +95,7 @@ public:
 
             void operator()(shared_ptr<Subscription> & subscription) const;
 
-            void operator()(PutRequest & putRequest) const;
+            void operator()(shared_ptr<PutRequest> & putRequest) const;
     };
 
 };
