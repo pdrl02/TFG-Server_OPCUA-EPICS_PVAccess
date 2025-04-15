@@ -49,8 +49,7 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
                 break;
 
             default:
-                cerr << "Error converting EPICS Value to OPCUA Variant" << endl;
-                cerr << "Unknown TypeCode" << endl;
+                throw runtime_error("Unsupported value data type");
                 break;
         }
     } catch(exception e){
@@ -60,6 +59,7 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     return variant;
 }
 
+// Puede devolver un value vacío
 Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& dataValue) {
 
     UaVariant variant(*dataValue.value());
@@ -81,8 +81,15 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
                 break;
             }
 
+            case OpcUa_BuiltInType::OpcUaType_Int64: {
+                int64_t integer;
+                variant.toInt64(integer);
+                value = nt::NTScalar{TypeCode::Int64}.create().update("value", integer);
+                break;
+            }
+
             default: {
-                cout <<"variant type:::::" << variant.type() << endl;
+                throw runtime_error("Unsupported variant data type");
                 break;
             }
         }
