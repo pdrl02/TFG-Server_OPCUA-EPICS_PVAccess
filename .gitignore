@@ -7,3 +7,5 @@
 # System hidden files
 .vscode
 
+# Documentation
+/docs
