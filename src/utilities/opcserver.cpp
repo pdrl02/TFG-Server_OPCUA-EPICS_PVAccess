@@ -159,6 +159,5 @@ void OpcServer::setMyNodeManager(MyNodeIOEventManager * pMyNodeManager){
 void OpcServer::addEPICSGateway(EPICStoOPCUAGateway * gate) {
     m_pGateway = gate;
     getMyNodeIOEventManager()->setEPICSGateway(m_pGateway);
-    cout << "Todo bien" << endl;
     m_pGateway->start();
 }

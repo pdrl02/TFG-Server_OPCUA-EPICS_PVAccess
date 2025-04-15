@@ -14,7 +14,6 @@
 #include <uabasenodes.h>
 #include <uadatavalue.h>
 #include <pvxs/nt.h>
-#include <future>
 
 using namespace pvxs;
 using namespace pvxs::client;
@@ -23,7 +22,6 @@ using namespace std;
 struct PutRequest {
     const UaVariable * variable;
     UaDataValue dataValue;
-    promise<bool> resultPromise;
 
     PutRequest() = default;
 
@@ -81,9 +79,13 @@ public:
 
     void stop();
 
-    void enqueuePutTask(const UaVariable * variable, const UaDataValue& value, promise<bool> & resultPromise);
+    void enqueuePutTask(const UaVariable * variable, const UaDataValue& value);
 
     bool addMapping(const string & name, const PVMapping & pvMapping);
+
+    bool isMapped(const string & str);
+
+    bool isMapped(const UaNodeId & nodeId);
 
 
     class GatewayHandler {

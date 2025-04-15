@@ -352,26 +352,23 @@ OpcUa_Boolean MyNodeIOEventManager::beforeSetAttributeValue(
     
     UaVariable* pVariable = nullptr;
 
+    if(m_pEPICSGateway == nullptr)
+        return OpcUa_True;
+
     if((pNode != NULL) && (pNode->nodeClass() == OpcUa_NodeClass_Variable))
         pVariable = (UaVariable*) pNode;
 
-    // Create promise and future
-    promise<bool> resultPromise;
-    future<bool> resultFuture = resultPromise.get_future();
+    // IOC Variable
+    if(m_pEPICSGateway->isMapped(pVariable->nodeId())){
 
-    if(m_pEPICSGateway != nullptr)
-        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue, resultPromise);
-    else
-        resultPromise.set_value(false);
-
-    auto result = resultFuture.wait_for(chrono::milliseconds(500));
-
-    if(result == future_status::ready && resultFuture.get())
+        m_pEPICSGateway->enqueuePutTask(pVariable, dataValue);
+        
         return OpcUa_False;
-    else {
-        cerr << "Timeout in pvxs put operation. Cancelling write operation" << endl;
-        return OpcUa_False;
+
     }
+
+    // Not IOC Variable
+    return OpcUa_True;
     
 }
 

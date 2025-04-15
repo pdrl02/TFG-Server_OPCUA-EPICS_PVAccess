@@ -146,18 +146,15 @@ void EPICStoOPCUAGateway::stop() {
     m_workerThreads.clear();
 }
 
-void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value, promise<bool> & resultPromise) {
+void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDataValue& value) {
 
     auto it = m_pvMapUaNode.find(variable->nodeId().toXmlString().toUtf8());
     if(it != m_pvMapUaNode.end()){
         auto request = std::make_shared<PutRequest>(variable, value);
-        // Move promise because it can not be copied
-        request->resultPromise = std::move(resultPromise);
         auto eventPut = make_shared<GatewayEvent>(request);
         m_workQueue.push(eventPut);
     } else {
         cerr << "Variable not found in the UaNodeId mapping." << endl;
-        resultPromise.set_value(false);
     }
     
 }
@@ -170,6 +167,14 @@ bool EPICStoOPCUAGateway::addMapping(const string& name, const PVMapping& pvMapp
         return result.second;  
     }
     return false;
+}
+
+bool EPICStoOPCUAGateway::isMapped(const string& str){
+    return (m_pvMapName.find(str) != m_pvMapName.end());
+}
+
+bool EPICStoOPCUAGateway::isMapped(const UaNodeId& nodeId){ 
+    return (m_pvMapUaNode.find(nodeId.toXmlString().toUtf8()) != m_pvMapUaNode.end()); 
 }
 
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & subscription) const {
@@ -200,36 +205,24 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & 
 
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & putRequest) const {
     if(putRequest->variable != nullptr){
-        try {
-            cout << "Procesando put request" << endl;
-            auto it = m_self->m_pvMapUaNode.find(putRequest->variable->nodeId().toXmlString().toUtf8());
-            if(it != m_self->m_pvMapUaNode.end()){
-                // Conver tdata from OPC UA to EPICS
-                Value value = m_self->convertUaDataValueToPvxsValue(putRequest->dataValue);
-                // Update value in IOC
-                try{
-                    m_self->m_pvxsContext.put(it->second.epicsName)
-                    .set("value", value["value"])
-                    .exec()->wait(1);
-
-                    // Success
-                    putRequest->resultPromise.set_value(true);
-                } 
-                catch (const exception & e) {
-                    cerr << "Error in input request hadler: Error in pvxs put operation" << endl;
-                    cerr << e.what() << endl;
-                    putRequest->resultPromise.set_value(false);
-                }
+        cout << "Procesando put request" << endl;
+        auto it = m_self->m_pvMapUaNode.find(putRequest->variable->nodeId().toXmlString().toUtf8());
+        // Conver tdata from OPC UA to EPICS
+        Value value = m_self->convertUaDataValueToPvxsValue(putRequest->dataValue);
+        // Update value in IOC
+        try{
+            if(value.valid()){
+                m_self->m_pvxsContext.put(it->second.epicsName)
+                .set("value", value["value"])
+                .exec()->wait(1);
+                // Success
             }
-            else {
-                cerr << "Error in input request handler: Error finding mapped variable" << endl;
-                putRequest->resultPromise.set_value(false);
-            }
-    
-        } catch (exception & e) {
-            cerr << "Error in input request handler." << endl << e.what() << endl;
-            putRequest->resultPromise.set_value(false);
+        } 
+        catch (const exception & e) {
+            cerr << "Error in input request hadler: Error in pvxs put operation" << endl;
+            cerr << e.what() << endl;
+            // Avisar a NodeManager???
         }
-        //m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
+    //m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
     }
 }
