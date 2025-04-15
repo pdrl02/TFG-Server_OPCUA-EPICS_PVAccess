@@ -1,33 +1,18 @@
-/******************************************************************************
-** opcserver.cpp
-**
-** Copyright (c) 2006-2024 Unified Automation GmbH. All rights reserved.
-**
-** Software License Agreement ("SLA") Version 2.8
-**
-** Unless explicitly acquired and licensed from Licensor under another
-** license, the contents of this file are subject to the Software License
-** Agreement ("SLA") Version 2.8, or subsequent versions
-** as allowed by the SLA, and You may not copy or use this file in either
-** source code or executable form, except in compliance with the terms and
-** conditions of the SLA.
-**
-** All software distributed under the SLA is provided strictly on an
-** "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-** AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT
-** LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-** PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the SLA for specific
-** language governing rights and limitations under the SLA.
-**
-** The complete license agreement can be found here:
-** http://unifiedautomation.com/License/SLA/2.8/
-**
-** Project: C++ OPC Server SDK sample code
-**
-** Description: Main OPC Server object class.
-**
-******************************************************************************/
-#include "opcserver.h"
+/**
+ * @file opcServer.cpp
+ * @brief Implementation of the OpcServer class.
+ * 
+ * Contains the logic for server startup, initialization,
+ * and endpoint configuration. Based on Unified Automation SDK sample code.
+ * 
+ * @author Pablo Del Río López
+ * @date 2025-06-01
+ * @copyright
+ * This file includes portions of code © 2006–2024 Unified Automation GmbH,
+ * used under the SLA 2.8 license: https://www.unified-automation.com/License/SLA/2.8/
+ */
+
+#include "opcServer.h"
 #include "uamodule.h"
 #include "uasession.h"
 
@@ -37,11 +22,6 @@
 
 /** Construction. */
 OpcServer::OpcServer()
-{}
-
-/** Construction. */
-OpcServer::OpcServer(int argc, char* argv[], bool bRunAsService, const UaString &sApplicationName)
-: UaServerApplication(argc, argv, bRunAsService, sApplicationName)
 {}
 
 /** Destruction. */
@@ -108,9 +88,6 @@ UaStatus OpcServer::afterStartUp()
     return ret;
 }
 
-/** Get the build date from the static compiled in string.
- *  @return the build date from the static compiled in string.
- */
 OpcUa_DateTime OpcServer::getBuildDate() const
 {
     static OpcUa_DateTime date;
@@ -152,8 +129,13 @@ MyNodeIOEventManager* OpcServer::getMyNodeIOEventManager() {
     return m_pMyNodeManager;
 }
 
-void OpcServer::setMyNodeManager(MyNodeIOEventManager * pMyNodeManager){
-    m_pMyNodeManager = pMyNodeManager;
+int OpcServer::setMyNodeManager(MyNodeIOEventManager * pMyNodeManager){
+    int ret = -1;
+    if(pMyNodeManager != nullptr){
+        ret = this->addNodeManager(pMyNodeManager);
+        m_pMyNodeManager = pMyNodeManager;
+    }
+    return ret;
 }
 
 void OpcServer::addEPICSGateway(EPICStoOPCUAGateway * gate) {

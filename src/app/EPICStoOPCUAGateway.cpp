@@ -230,6 +230,5 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & pu
             cerr << e.what() << endl;
             // Avisar a NodeManager???
         }
-    //m_self->m_workQueue.push(make_shared<GatewayEvent>(putRequest));
     }
 }

@@ -1,7 +1,7 @@
 #include "uaplatformlayer.h"
 #include "shutdown.h"
 #include "xmldocument.h"
-#include "opcserver.h"
+#include "opcServer.h"
 #include "uathread.h"
 #include <iostream>
 #include <string.h>
@@ -40,8 +40,7 @@ int OpcServerMain(const char* szAppPath)
 
         // Add NodeManager for the server specific nodes
         MyNodeIOEventManager *pMyNodeIOEventManager = new MyNodeIOEventManager();
-        ret = pServer->addNodeManager(pMyNodeIOEventManager);
-        pServer->setMyNodeManager(pMyNodeIOEventManager);
+        ret = pServer->setMyNodeManager(pMyNodeIOEventManager);
 
         // Start server object
         ret = pServer->start();

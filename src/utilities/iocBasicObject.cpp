@@ -13,7 +13,7 @@ IocBasicObject::IocBasicObject(
     UaObjectBase(name, newNodeId, defaultLocaleId),
     m_typeId(typeId), m_pNodeManager(pNodeManager) {
 
-    std::cout << "Objeto creado" << std::endl;
+    std::cout << "Objeto " << name << " creado" << std::endl;
     
 }
 
