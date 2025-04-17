@@ -173,8 +173,8 @@ UaStatus MyNodeIOEventManager::createObject(
 
     m_mutexNodes.lock();
     std::vector<UaVariable*> variables = getInstanceDeclarationVariableArray(typeId);
-    for(auto* it : variables){
-        pObject->addVariable(it->nodeId().identifierNumeric());
+    for(auto it : variables){
+        pObject->addVariable(it);
     }
 
     m_mutexNodes.unlock();

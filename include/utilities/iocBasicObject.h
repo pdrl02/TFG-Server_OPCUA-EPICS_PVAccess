@@ -44,7 +44,6 @@ private:
 public:
     /**
      * @brief Constructor.
-     * 
      * @param name Name of the new object.
      * @param newNodeId NodeId of the new object.
      * @param defaultLocaleId Default LocaleId for the node manager.
@@ -64,9 +63,15 @@ public:
     virtual ~IocBasicObject(void);
 
     /**
-     * 
+     * @brief Add a variable to this instance. 
+     * Currently only works with variable whose types are: 
+     * [BaseAnalogType](https://documentation.unified-automation.com/uasdkcpp/1.8.6/html/classOpcUa_1_1BaseAnalogType.html)
+     * [TwoStateDiscreteType](https://documentation.unified-automation.com/uasdkcpp/1.8.6/html/classOpcUa_1_1TwoStateDiscreteType.html)
+     * [MultiStateDiscreteType](https://documentation.unified-automation.com/uasdkcpp/1.8.6/html/classOpcUa_1_1MultiStateDiscreteType.html)
+     * @param pInstanceDeclarationVar Pointer to the variable of the ObjectType of this instance.
+     * @return UaStatus with error code of the operation.
      */
-    UaStatus addVariable(const int typeIdVar);
+    UaStatus addVariable(UaVariable * pInstanceDeclarationVar);
 
     /**
      * @brief Determines the UaNodeId representing the ObjectType associated with this instance.
@@ -74,7 +79,10 @@ public:
      */
     inline UaNodeId typeDefinitionId() const { return UaNodeId(m_typeId, m_pNodeManager->getNameSpaceIndex()); };
 
-    // Implement UaObject interface
+    /**
+     * @brief Return the EventNotifier for this instance. (Ua_EventNotifier_None)
+     * @return Ua_EventNotifier_None
+     */
     OpcUa_Byte eventNotifier() const;
 
 

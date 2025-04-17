@@ -19,24 +19,22 @@ IocBasicObject::IocBasicObject(
 
 IocBasicObject::~IocBasicObject(void) {}
 
-UaStatus IocBasicObject::addVariable(const int typeIdVar) { 
+UaStatus IocBasicObject::addVariable(UaVariable * pInstanceDeclarationVar) { 
     
-    UaVariable* pInstanceDeclaration = m_pNodeManager->getInstanceDeclarationVariable(typeIdVar);
-    UA_ASSERT(pInstanceDeclaration!=NULL);
+    UA_ASSERT(pInstanceDeclarationVar!=NULL);
 
     UaStatus result;
 
     // Use dynamic cast to determine the variable type
     // Analog Variable
-    if (auto* pAnalogType = dynamic_cast<OpcUa::BaseAnalogType*>(pInstanceDeclaration)) {
+    if (auto* pAnalogType = dynamic_cast<OpcUa::BaseAnalogType*>(pInstanceDeclarationVar)) {
 
         OpcUa::AnalogItemType* pAnalogVar = new OpcUa::AnalogItemType(
             this,
-            pInstanceDeclaration,
+            pInstanceDeclarationVar,
             m_pNodeManager,
             m_pSharedMutex
         );
-        //pAnalogVar->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////
         pAnalogVar->setEngineeringUnits(pAnalogType->getEngineeringUnits());
         pAnalogVar->setEURange(pAnalogType->getEURange());
         pAnalogVar->setInstrumentRange(pAnalogType->getInstrumentRange());
@@ -45,11 +43,11 @@ UaStatus IocBasicObject::addVariable(const int typeIdVar) {
         
     }
     // Two State Variable
-    else if (auto* pTwoStateType = dynamic_cast<OpcUa::TwoStateDiscreteType*>(pInstanceDeclaration)) {
+    else if (auto* pTwoStateType = dynamic_cast<OpcUa::TwoStateDiscreteType*>(pInstanceDeclarationVar)) {
         
         OpcUa::TwoStateDiscreteType* pTwoStateVar = new OpcUa::TwoStateDiscreteType(
             this,
-            pInstanceDeclaration,
+            pInstanceDeclarationVar,
             m_pNodeManager,
             m_pSharedMutex
         );
@@ -61,11 +59,11 @@ UaStatus IocBasicObject::addVariable(const int typeIdVar) {
 
     }
     // Multi State Variable
-    else if (auto* pMultiStateType = dynamic_cast<OpcUa::MultiStateDiscreteType*>(pInstanceDeclaration)) {
+    else if (auto* pMultiStateType = dynamic_cast<OpcUa::MultiStateDiscreteType*>(pInstanceDeclarationVar)) {
         
         OpcUa::MultiStateDiscreteType * pMultiStateVar = new OpcUa::MultiStateDiscreteType(
             this,
-            pInstanceDeclaration,
+            pInstanceDeclarationVar,
             m_pNodeManager,
             m_pSharedMutex
         );
@@ -87,4 +85,4 @@ UaStatus IocBasicObject::addVariable(const int typeIdVar) {
     return result;
 }
 
-OpcUa_Byte IocBasicObject::eventNotifier() const { return OpcUa_Byte(); }
+OpcUa_Byte IocBasicObject::eventNotifier() const { return Ua_EventNotifier_None; }
