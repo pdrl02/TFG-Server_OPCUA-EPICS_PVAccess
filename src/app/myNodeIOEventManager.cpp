@@ -1,31 +1,15 @@
 #include "myNodeIOEventManager.h"
-
 #include <opcua_dataitemtype.h>
 #include <opcua_analogitemtype.h>
 #include <opcua_twostatediscretetype.h>
 #include <opcua_multistatediscretetype.h>
-
-
 #include <iostream>
-
 #include <typeIDs.h>
 #include <iocBasicObject.h>
-
 #include <EPICStoOPCUAGateway.h>
 
-/**
- * Crea un type model especifico para el servidor. Se hace definiendo y añadiendo TypeNode al 
- * espacio de direcciones del servidor. TypeNode representan ObjectTypes, es decir, tipos de objetos,
- * son como clases.
- */
-UaStatus MyNodeIOEventManager::createTypeNodes()
-{
-
-    return UaStatus();
-}
-
 MyNodeIOEventManager::MyNodeIOEventManager()
-    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_True) {
+    : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_False) {
 
     std::cout << "Constructor del servidor..." << std::endl;
     //m_defaultLocaleId = "en";
@@ -36,7 +20,11 @@ MyNodeIOEventManager::~MyNodeIOEventManager(){
     
 }
 
-UaStatus MyNodeIOEventManager::createObjectType(const UaString & name, const int typeId, OpcUa_Boolean abstract, const UaNodeId & sourceNode) {
+UaStatus MyNodeIOEventManager::createObjectType(
+    const UaString & name, 
+    const int typeId, 
+    OpcUa_Boolean abstract, 
+    const UaNodeId & sourceNode) {
    
     UaObjectTypeSimple * pType;
     UaStatus result;
@@ -200,7 +188,7 @@ UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &varia
 
     OpcUa_Double val;
     variant.toDouble(val);
-    std::cout << "Variant: " << val << std::endl;
+    //std::cout << "Variant: " << val << std::endl;
 
     UaDataValue dataValue(variant, OpcUa_Good, sourceTimestamp, serverTimestamp);
     return pVariable->setValue(NULL, dataValue, OpcUa_True );
@@ -324,21 +312,6 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
 UaStatus MyNodeIOEventManager::beforeShutDown()
 {
     std::cout << "Se cierra el servidor" << std::endl;
-    return UaStatus();
-}
-
-// borrar
-UaStatus MyNodeIOEventManager::readValues(const UaVariableArray &arrUaVariables, UaDataValueArray &arrDataValues)
-{
-    return UaStatus();
-}
-
-//borrar 
-UaStatus MyNodeIOEventManager::writeValues(
-    const UaVariableArray &arrUaVariables, 
-    const PDataValueArray &arrpDataValues, 
-    UaStatusCodeArray &arrStatusCodes)
-{
     return UaStatus();
 }
 
