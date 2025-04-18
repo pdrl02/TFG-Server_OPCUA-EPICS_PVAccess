@@ -1,30 +1,26 @@
 #include "EPICStoOPCUAGateway.h"
 #include "iostream"
 
-// Lo que ejecuta el hilo de procesamiento, es decir, los hilos consumidores los workers 
+// Workers execution
 void EPICStoOPCUAGateway::processQueue() {
 
     GatewayHandler handler(this);
 
     while(m_running.load()){
-        cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
+        //cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
         // Obtener el siguiente elemento de la cola
         auto pEvent = m_workQueue.pop();
         if(pEvent){
             try{
                 std::visit(handler, *pEvent);
-                //if(m_running.load())
-                //    m_workQueue.push(pEvent);
             } catch (const exception & e) {
                 cerr << "Error processing event: " << e.what() << endl;
-                //if(m_running.load())
-                //    m_workQueue.push(pEvent);
             }
         }
     }
 }
 
-// Puede devolver un variant vacio!!!!!!!!!
+
 UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     
     UaVariant variant;
@@ -59,7 +55,6 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     return variant;
 }
 
-// Puede devolver un value vacío
 Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& dataValue) {
 
     UaVariant variant(*dataValue.value());
@@ -100,23 +95,23 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     return value;
 }
 
-EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager)
-    : m_pNodeManager(pNodeManager) {    
+EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager, int numThreads)
+    : m_pNodeManager(pNodeManager), m_numThreads(numThreads) {    
 
     m_pvxsContext = Context(Config::from_env().build());
     addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("obj1.1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {
-    //stop();
+    stop();
 }
 
 void EPICStoOPCUAGateway::start() {
     
     m_running.store(true);
 
-    // Subscribirse a cada PV de los IOC.
-    // Deben estar las variables en m_pvMap
+    // Subscribirse to each PV.
+    // They have to be in m_pvMap
     for(const auto & [pvName, pvMapping] : m_pvMapName){
 
         m_subcriptions.push_back(
@@ -128,7 +123,7 @@ void EPICStoOPCUAGateway::start() {
         );
     }
 
-    // Iniciar los hilos de procesamiento
+    // Start workers
     for(int i = 0; i<m_numThreads; ++i){
         m_workerThreads.push_back(thread([this](){processQueue();}));
     }
@@ -139,12 +134,12 @@ void EPICStoOPCUAGateway::stop() {
     
     m_running.store(false);
 
-    // Señales para terminar los hilos
+    // Signal to stop workers
     for(int i = 0; i < m_numThreads; ++i){
         m_workQueue.push(nullptr);
     }
 
-    // Join a los hilos
+    // Join to threads
     for(auto & thread : m_workerThreads)
         if(thread.joinable())
             thread.join();
@@ -187,7 +182,7 @@ bool EPICStoOPCUAGateway::isMapped(const UaNodeId& nodeId){
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & subscription) const {
     if(subscription){
         try{
-            cout << "Empieza Evento de monitoreo " << endl;
+            //cout << "Empieza Evento de monitoreo " << endl;
             Value value = subscription->pop();
             if(!value)
                 return;
@@ -212,7 +207,7 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & 
 
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & putRequest) const {
     if(putRequest->variable != nullptr){
-        cout << "Procesando put request" << endl;
+        //cout << "Procesando put request" << endl;
         auto it = m_self->m_pvMapUaNode.find(putRequest->variable->nodeId().toXmlString().toUtf8());
         // Conver tdata from OPC UA to EPICS
         Value value = m_self->convertUaDataValueToPvxsValue(putRequest->dataValue);
@@ -228,7 +223,7 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & pu
         catch (const exception & e) {
             cerr << "Error in input request hadler: Error in pvxs put operation" << endl;
             cerr << e.what() << endl;
-            // Avisar a NodeManager???
+            // Notify NodeManager???
         }
     }
 }

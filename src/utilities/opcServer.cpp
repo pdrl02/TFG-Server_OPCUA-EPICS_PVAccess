@@ -28,7 +28,7 @@ OpcServer::OpcServer()
 OpcServer::~OpcServer()
 {
     if(m_pGateway != nullptr)
-        m_pGateway->stop();
+        delete m_pGateway;
     
     if ( isStarted() != OpcUa_False )
     {

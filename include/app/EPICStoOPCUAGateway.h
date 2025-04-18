@@ -184,7 +184,7 @@ private:
      * @brief Number of workers threads used to process queued events.
      * 
      */
-    const int m_numThreads = 1;
+    int m_numThreads;
 
     /**
      * @brief Thread pool for processing the work queue asynchonously.
@@ -215,7 +215,7 @@ private:
      * @brief Converts a PVXS Value to an OPC UA UaVariant.
      * 
      * @param value The PVXS Value to be converted.
-     * @return UaVariant with the corresponding Value.
+     * @return UaVariant with the corresponding Value. Can be empty.
      */
     UaVariant convertValueToVariant(const Value & value);
 
@@ -223,7 +223,7 @@ private:
      * @brief Converts a OPC UA UaVariant to a PVXS Value.
      * 
      * @param dataValue The OPC UA data to convert.
-     * @return Value with the corresponding value.
+     * @return Value with the corresponding value. Can be empty.
      */
     Value convertUaDataValueToPvxsValue(const UaDataValue & dataValue);
 
@@ -234,8 +234,9 @@ public:
      * @brief Construct a new EPICStoOPCUAGateway object.
      * 
      * @param pNodeManager Pointer to MyNodeIOEventManager.
+     * @param numThreads Number of workers attending the event queue.
      */
-    EPICStoOPCUAGateway(MyNodeIOEventManager * pNodeManager);
+    EPICStoOPCUAGateway(MyNodeIOEventManager * pNodeManager, int numThreads = 1);
 
     /**
      * @brief Destroy the EPICStoOPCUAGateway object.

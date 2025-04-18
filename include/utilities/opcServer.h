@@ -66,6 +66,8 @@ public:
 
     /**
      * @brief Adds an EPICS-to-OPC_UA Gateway to the server.
+     * This class will delete the gateway when this class destroy itself.
+     * This method will start the gateway. 
      * @param gate Pointer to the EPICS-to-OPC_UA gateway object.
      * @see EPICStoOPCUAGateway
      */

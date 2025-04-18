@@ -15,9 +15,7 @@ MyNodeIOEventManager::MyNodeIOEventManager()
 
 }
 
-MyNodeIOEventManager::~MyNodeIOEventManager(){
-    
-}
+MyNodeIOEventManager::~MyNodeIOEventManager(){}
 
 UaStatus MyNodeIOEventManager::createObjectType(
     const UaString & name, 
@@ -79,8 +77,6 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
     return result;
 
 }
-
-// in or out cambia UaAccessLevel
 
 UaStatus MyNodeIOEventManager::createTwoStateVariableType(
     const UaString &name, 
