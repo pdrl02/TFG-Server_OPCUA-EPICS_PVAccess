@@ -203,13 +203,17 @@ public:
     // IOManagerUaNode implementation https://documentation.unified-automation.com/uasdkcpp/1.8.6/html/classIOManagerUaNode.html
 
     /**
-     * @brief 
+     * @brief Event that is called before the value of an attributte of a Node is set. 
+     * If the variable is registered in m_pEPICSGateway, never allows writing, but generates an EPICS put event that will
+     * change the value of the attributte.
+     * If the variable is not registered, allows writing.
      * 
-     * @param pSession 
-     * @param pNode 
-     * @param attributeId 
-     * @param dataValue 
-     * @param checkWriteMask 
+     * @param pSession Interface of the Session context for the attribute write.
+     * @param pNode Interface of the UaNode to update.
+     * @param attributeId Attribute id indicating the attribute to set.
+     * @param dataValue New value for the attribute.
+     * @param checkWriteMask Flag indicating if the write mask of the node attribute or the access level for the value
+     * attribute should be checked in UaNode::setAttributeValue.
      * @return OpcUa_Boolean 
      */
     OpcUa_Boolean beforeSetAttributeValue(
@@ -219,15 +223,24 @@ public:
         const UaDataValue & dataValue,
         OpcUa_Boolean & checkWriteMask
     );	
-    
-    // EventManagerUaNode implementation
-    virtual UaStatus OnAcknowledge(const ServiceContext& serviceContext, OpcUa::AcknowledgeableConditionType* pCondition,
-                                    const UaByteString& EventId, const UaLocalizedText& Comment);
-    
 
-    // Métodos para obtener los nodos de declaración de instancia
+    /**
+     * @brief Get the instance declaration node of a variable for a numeric identifier.
+     * 
+     * @param numericIdentifier Numeric identifier of the node of the variable.
+     * @return UaVariable* Pointer to the UaVariable or NULL if it do not exist.
+     */
     UaVariable* getInstanceDeclarationVariable(OpcUa_UInt32 numericIdentifier);
-    std::vector<UaVariable*> getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier);
+
+    /**
+     * @brief Get a vector with a pointer to every variable of an ObjectType.
+     * This method is thread unsafe. To use it ensure that m_mutexNodes is blocked, and realease it
+     * after this method.
+     * 
+     * @param numericIdentifier Numeric identifier for the ObjectType.
+     * @return std::vector<UaVariable*> Vector with pointers to variables of the ObjectType.
+     */
+    std::vector<UaVariable*> getVariablesFromObjectType(OpcUa_UInt32 numericIdentifier);
 
 ;
 };

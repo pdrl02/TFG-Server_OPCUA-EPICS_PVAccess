@@ -12,7 +12,6 @@ MyNodeIOEventManager::MyNodeIOEventManager()
     : NodeManagerBase("TFG:OPCUA_EPICS", OpcUa_False) {
 
     std::cout << "Constructor del servidor..." << std::endl;
-    //m_defaultLocaleId = "en";
 
 }
 
@@ -69,7 +68,6 @@ UaStatus MyNodeIOEventManager::createAnalogVariableType(
         (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
         this);
     pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
-    //pBaseAnalogType->setValueHandling(UaVariable_Value_Cache);///////////////////////////////////////////////////////////////////////////////////
     result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
     UA_ASSERT(result.isGood());
 
@@ -154,13 +152,12 @@ UaStatus MyNodeIOEventManager::createObject(
     const UaNodeId & objectId,           // NodeId of the new object
     const UaNodeId & sourceNodeId        // Node of the parent
 ) {
-    //std::cout << "AA" << m_defaultLocaleId << "AA" << std::endl;
     UaStatus result;
 
     IocBasicObject * pObject = new IocBasicObject(objectName, objectId, m_defaultLocaleId, this, typeId);
 
     m_mutexNodes.lock();
-    std::vector<UaVariable*> variables = getInstanceDeclarationVariableArray(typeId);
+    std::vector<UaVariable*> variables = getVariablesFromObjectType(typeId);
     for(auto it : variables){
         pObject->addVariable(it);
     }
@@ -198,8 +195,6 @@ void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway* pEPICSGateway) {
     m_pEPICSGateway = pEPICSGateway;
 }
 
-// Esta función se llama cuando el NodeManager está creado e inicializado.
-// Aquí creamos nuestros UaNodes. Nosotros llamamos a createTypeNodes para crear nuestro Type Model
 UaStatus MyNodeIOEventManager::afterStartUp(){
 
     // Create IOCBasicType
@@ -345,15 +340,6 @@ OpcUa_Boolean MyNodeIOEventManager::beforeSetAttributeValue(
     
 }
 
-UaStatus MyNodeIOEventManager::OnAcknowledge(
-    const ServiceContext &serviceContext,
-    OpcUa::AcknowledgeableConditionType *pCondition,
-     const UaByteString &EventId,
-      const UaLocalizedText &Comment)
-{
-    return UaStatus();
-}
-
 UaVariable * MyNodeIOEventManager::getInstanceDeclarationVariable(OpcUa_UInt32 numericIdentifier)
 {
     // Try to find the instance declaration node with the numeric identifier 
@@ -367,9 +353,8 @@ UaVariable * MyNodeIOEventManager::getInstanceDeclarationVariable(OpcUa_UInt32 n
     
 }
 
-// Return a vector with all variables of a object type
-// Thread unsafe require     m_mutexNodes.lock();
-std::vector<UaVariable*> MyNodeIOEventManager::getInstanceDeclarationVariableArray(OpcUa_UInt32 numericIdentifier){
+
+std::vector<UaVariable*> MyNodeIOEventManager::getVariablesFromObjectType(OpcUa_UInt32 numericIdentifier){
     
     UaNode* pNode = findNode(UaNodeId(numericIdentifier, getNameSpaceIndex()));
     UaReference * pReference = const_cast<UaReference *>(pNode->getUaReferenceLists()->pTargetNodes());
