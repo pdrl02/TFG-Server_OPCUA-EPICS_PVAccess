@@ -39,16 +39,17 @@ int OpcServerMain(const char* szAppPath)
         // Add NodeManager for the server specific nodes
         MyNodeIOEventManager *pMyNodeIOEventManager = new MyNodeIOEventManager();
         ret = pServer->setMyNodeManager(pMyNodeIOEventManager);
+        
 
         // Start server object
         ret = pServer->start();
         if ( ret != 0 ){
-            std::cout << "Error al iniciar el servidor: " << ret << std::endl;
+            std::cout << "Error starting the server: " << ret << std::endl;
         }
 
         if ( ret == 0 ){
             // Add Gateway to the server
-            EPICStoOPCUAGateway * pGateway = new EPICStoOPCUAGateway (pMyNodeIOEventManager, 4);
+            EPICStoOPCUAGateway * pGateway = new EPICStoOPCUAGateway (pMyNodeIOEventManager, 1);
             pServer->addEPICSGateway(pGateway);
 
             printf("***************************************************\n");

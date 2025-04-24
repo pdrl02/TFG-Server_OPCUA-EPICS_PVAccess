@@ -8,7 +8,7 @@ void EPICStoOPCUAGateway::processQueue() {
 
     while(m_running.load()){
         //cout << "Soy: " << this_thread::get_id() << " y he llegado a processQueue" << endl;
-        // Obtener el siguiente elemento de la cola
+        // Obtain the next queue element
         auto pEvent = m_workQueue.pop();
         if(pEvent){
             try{
@@ -25,8 +25,25 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     
     UaVariant variant;
     try {
-        TypeCode::code_t code = value.lookup("value").type().code;
-        Value valueField = value.lookup("value");
+        Value valueField;
+        TypeCode::code_t code;
+        string id = value.id();
+
+        // Its a NTScalar
+        if (id == "epics:nt/NTScalar:1.0") {
+            valueField = value["value"];
+            code = valueField.type().code;
+        }
+        // Its a NTEnum 
+        else if (id == "epics:nt/NTEnum:1.0") {
+            valueField = value["value"]["index"];
+            // Can not exist a mbbi or mbbo with 2 states
+            if(value["value"]["choices"].as<shared_array<const string>>().size() == 2)
+                code = TypeCode::Bool;
+            else
+                code = TypeCode::Int64;
+        }
+        
         switch(code){
             case TypeCode::Bool:
                 variant.setBool(valueField.as<bool>());
@@ -46,9 +63,10 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
 
             default:
                 throw runtime_error("Unsupported value data type");
+                
                 break;
         }
-    } catch(exception e){
+    } catch(const exception & e){
         cerr << "Error converting EPICS Value to OPCUA Variant" << endl;
         cerr << e.what() << endl;
     }   
@@ -61,14 +79,21 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     Value value;
     try {
         switch (variant.type()){
+
+            // Boolean TwoStateVariable -> NTEnum
             case OpcUa_BuiltInType::OpcUaType_Boolean: {
                 OpcUa_Boolean opcuaBool;
                 variant.toBool(opcuaBool);
-                bool rawBool = !(opcuaBool != OpcUa_False);
-                value = nt::NTScalar{TypeCode::Bool}.create().update("value", rawBool);
+                if(opcuaBool)
+                //value = nt::NTScalar{TypeCode::Bool}.create().update("value", rawBool);
+                    value = nt::NTEnum{}.create().update("value.index", 1);
+                else
+                    value = nt::NTEnum{}.create().update("value.index", 0);
+                cout << value << endl;
                 break;
             }
 
+            // Double -> Int64, longint, double?
             case OpcUa_BuiltInType::OpcUaType_Double: {
                 double doubleValue;
                 variant.toDouble(doubleValue);
@@ -76,10 +101,11 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
                 break;
             }
 
+            // Int64 is used in MultiStateVariable -> NTEnum
             case OpcUa_BuiltInType::OpcUaType_Int64: {
                 int64_t integer;
                 variant.toInt64(integer);
-                value = nt::NTScalar{TypeCode::Int64}.create().update("value", integer);
+                value = nt::NTEnum{}.create().update("value.index", integer);
                 break;
             }
 
@@ -99,7 +125,19 @@ EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager, int
     : m_pNodeManager(pNodeManager), m_numThreads(numThreads) {    
 
     m_pvxsContext = Context(Config::from_env().build());
-    addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("obj1.1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
+
+    //addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("Ejemplo1.Temperature", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("Ejemplo1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
+
+    addMapping( "ejemplo2:OpenCmd", PVMapping("ejemplo2:OpenCmd", UaNodeId("Ejemplo2.OpenCmd", m_pNodeManager->getNameSpaceIndex())));
+    //addMapping( "ejemplo2:Status", PVMapping("ejemplo2:Status", UaNodeId("Ejemplo2.Status", m_pNodeManager->getNameSpaceIndex())));
+
+    //addMapping( "ejemplo3:int64out", PVMapping("ejemplo3:int64out", UaNodeId("Ejemplo3.int64out", m_pNodeManager->getNameSpaceIndex())));
+    //addMapping( "ejemplo3:int64in", PVMapping("ejemplo3:int64in", UaNodeId("Ejemplo3.int64in", m_pNodeManager->getNameSpaceIndex())));
+    //addMapping( "ejemplo3:longin", PVMapping("ejemplo3:longin", UaNodeId("Ejemplo3.longin", m_pNodeManager->getNameSpaceIndex())));
+    //addMapping( "ejemplo3:longout", PVMapping("ejemplo3:longout", UaNodeId("Ejemplo3.longout", m_pNodeManager->getNameSpaceIndex())));
+    //addMapping( "ejemplo3:mbbi", PVMapping("ejemplo3:mbbi", UaNodeId("Ejemplo3.mbbi", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:mbbo", PVMapping("ejemplo3:mbbo", UaNodeId("Ejemplo3.mbbo", m_pNodeManager->getNameSpaceIndex())));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {
@@ -190,15 +228,17 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & 
             cout << subscription->name() << endl;
             auto it = m_self->m_pvMapName.find(subscription->name());
             if(it != m_self->m_pvMapName.end()){
-                cout << "Llego a actualizar la variable" << endl;
+                //cout << "Llego a actualizar la variable" << endl;
                 // Convert data from EPICS to OPC UA
                 UaVariant variant = m_self->convertValueToVariant(value);
                 // Update value in server
-                m_self->m_pNodeManager->updateVariable(it->second.nodeId, variant);
+                UaStatus ret = m_self->m_pNodeManager->updateVariable(it->second.nodeId, variant);
+                if(ret.isBad())
+                    throw runtime_error("Error in monitored variable: Error updating value in server.");
             }
 
 
-        } catch (exception e) {
+        } catch (const exception & e) {
             cerr << "Error: " << e.what() << endl;
         }
         m_self->m_workQueue.push(make_shared<GatewayEvent>(subscription));
@@ -213,10 +253,16 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & pu
         Value value = m_self->convertUaDataValueToPvxsValue(putRequest->dataValue);
         // Update value in IOC
         try{
-            if(value.valid()){
-                m_self->m_pvxsContext.put(it->second.epicsName)
-                .set("value", value["value"])
-                .exec()->wait(1);
+            if(value["value"].valid()){
+                if(value.id() == "epics:nt/NTScalar:1.0")
+                    m_self->m_pvxsContext.put(it->second.epicsName)
+                    .set("value", value["value"])
+                    .exec()->wait(1);
+
+                if(value.id() == "epics:nt/NTEnum:1.0")
+                    m_self->m_pvxsContext.put(it->second.epicsName)
+                    .set("value.index", value["value.index"])
+                    .exec()->wait(1);
                 // Success
             }
         } 

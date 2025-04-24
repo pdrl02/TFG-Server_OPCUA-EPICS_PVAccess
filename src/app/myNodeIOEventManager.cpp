@@ -181,10 +181,10 @@ UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &varia
 
     OpcUa_Double val;
     variant.toDouble(val);
-    //std::cout << "Variant: " << val << std::endl;
+    std::cout << "Variant: " << val << std::endl;
 
     UaDataValue dataValue(variant, OpcUa_Good, sourceTimestamp, serverTimestamp);
-    return pVariable->setValue(NULL, dataValue, OpcUa_True );
+    return pVariable->setValue( NULL /*this->m_pServerManager->getInternalSession()*/, dataValue, OpcUa_True );
 }
 
 void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway* pEPICSGateway) {
@@ -290,11 +290,9 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
                                     true, true, states);
 
     
-    createObject("obj1.1", TFG_IOC_Ejemplo1, UaNodeId("obj1.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("obj1.2", TFG_IOC_Ejemplo1, UaNodeId("obj1.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("obj2.1", TFG_IOC_Ejemplo2, UaNodeId("obj2.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("obj2.2", TFG_IOC_Ejemplo2, UaNodeId("obj2.2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("obj3.1", TFG_IOC_Ejemplo3, UaNodeId("obj3.1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("Ejemplo1", TFG_IOC_Ejemplo1, UaNodeId("Ejemplo1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("Ejemplo2", TFG_IOC_Ejemplo2, UaNodeId("Ejemplo2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("Ejemplo3", TFG_IOC_Ejemplo3, UaNodeId("Ejemplo3", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
        
     return UaStatus();  
 }
