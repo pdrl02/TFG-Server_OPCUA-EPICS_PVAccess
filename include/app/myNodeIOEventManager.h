@@ -16,8 +16,7 @@
 #include "nodemanagerbase.h"
 #include "uaeuinformation.h"
 #include "uarange.h"
-#include <memory>
-
+#include "opcua_baseanalogtype.h"
 class EPICStoOPCUAGateway;
 
 /**
@@ -78,32 +77,6 @@ public:
     );
 
     /**
-     * @brief Create a AnalogVariableType node in the namespace of this node manager.
-     * 
-     * @param name Name of the AnalogVariableType.
-     * @param value Default value.
-     * @param typeId Identifier used to create the UaNodeId of this variable.
-     * @param sourceNode The parent node in the address space (source of the HasComponent reference).
-     * @param writable Whether the variable is writable.
-     * @param mandatory Whether the variable is mandatory for the instances of the sourceNode
-     * @param EngineeringUnits Data describing engineering units.
-     * @param EURange Data describing the range of values that this variable can take. 
-     * @param InstrumentRange Data describing the limits of the instrument.
-     * @return UaStatus with error code of the operation.
-     */
-    UaStatus createAnalogVariableType(
-        const UaString & name, 
-        const OpcUa_Double value, 
-        const int typeId, 
-        const UaNodeId & sourceNode,
-        const bool writable = false,
-        const bool mandatory = true,
-        const UaEUInformation & EngineeringUnits =  UaEUInformation(),
-        const UaRange & EURange = UaRange(),
-        const UaRange & InstrumentRange = UaRange()	
-    );
-
-    /**
      * @brief Create a TwoStateVariableType node in the namespace of this node manager.
      * 
      * @param name Name of the TwoStateVariableType.
@@ -141,7 +114,7 @@ public:
      */
     UaStatus createMultiStatateVariableType(
         const UaString & name, 
-        const OpcUa_Int64 value, 
+        const OpcUa_Int16 value, 
         const int typeId, 
         const UaNodeId & sourceNode,
         const bool writable = false,
@@ -241,6 +214,81 @@ public:
      * @return std::vector<UaVariable*> Vector with pointers to variables of the ObjectType.
      */
     std::vector<UaVariable*> getVariablesFromObjectType(OpcUa_UInt32 numericIdentifier);
+
+    /**
+     * @brief Create a AnalogVariableType node in the namespace of this node manager.
+     * 
+     * This method creates an AnalogVariableType node in the OPC UA address space using a template type `T`. 
+     * The default type value for the variable is set based on the template type.
+     * 
+     * The template parameter `T` must be one of the following types:
+     * - `OpcUa_Int32`
+     * - `OpcUa_Int64`
+     * - `OpcUa_Double`
+     * 
+     * @tparam T The type of the value to be set as the default value for the variable. It should be OpcUa_Int32,
+     * OpcUa_Int64 o OpcUa_Double.
+     * 
+     * @param name Name of the AnalogVariableType.
+     * @param value Default value of type T.
+     * @param typeId Identifier used to create the UaNodeId of this variable.
+     * @param sourceNode The parent node in the address space (source of the HasComponent reference).
+     * @param writable Whether the variable is writable.
+     * @param mandatory Whether the variable is mandatory for the instances of the sourceNode
+     * @param EngineeringUnits Data describing engineering units.
+     * @param EURange Data describing the range of values that this variable can take. 
+     * @param InstrumentRange Data describing the limits of the instrument.
+     * @return UaStatus with error code of the operation.
+     */
+    template<typename T>
+    typename std::enable_if<
+        std::is_same<T, OpcUa_Int32>::value ||
+        std::is_same<T, OpcUa_Int64>::value ||
+        std::is_same<T, OpcUa_Double>::value,
+        UaStatus
+    >::type
+    createAnalogVariableType(
+        const UaString & name, 
+        const T value, 
+        const int typeId, 
+        const UaNodeId & sourceNode,
+        const bool writable = false,
+        const bool mandatory = true,
+        const UaEUInformation & EngineeringUnits =  UaEUInformation(),
+        const UaRange & EURange = UaRange(),
+        const UaRange & InstrumentRange = UaRange()	
+    ){
+        UaVariant defaultValue;                                 // Union for all data types
+        OpcUa::BaseAnalogType * pBaseAnalogType;                // Base type for analog data
+        UaStatus result;
+    
+        // Decides the type
+        if constexpr (std::is_same<T, OpcUa_Int32>::value)
+            defaultValue.setInt32(value);
+        else if constexpr (std::is_same<T, OpcUa_Int64>::value)
+            defaultValue.setInt64(value);
+        else if constexpr (std::is_same<T, OpcUa_Double>::value)
+            defaultValue.setDouble(value);
+
+        
+        pBaseAnalogType = new OpcUa::BaseAnalogType(
+            UaNodeId( typeId, getNameSpaceIndex()),
+            name,
+            getNameSpaceIndex(),
+            defaultValue,
+            (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
+            this);
+        pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
+        result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
+        UA_ASSERT(result.isGood());
+    
+        // Set property values
+        pBaseAnalogType->setEngineeringUnits(EngineeringUnits);
+        pBaseAnalogType->setEURange(EURange);
+        pBaseAnalogType->setInstrumentRange(InstrumentRange);
+    
+        return result;
+    }
 
 ;
 };

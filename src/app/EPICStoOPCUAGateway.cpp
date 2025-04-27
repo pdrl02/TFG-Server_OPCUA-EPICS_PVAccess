@@ -41,7 +41,7 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
             if(value["value"]["choices"].as<shared_array<const string>>().size() == 2)
                 code = TypeCode::Bool;
             else
-                code = TypeCode::Int64;
+                code = TypeCode::Int16;
         }
         
         switch(code){
@@ -51,6 +51,10 @@ UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
             
             case TypeCode::Float64:
                 variant.setDouble(valueField.as<double>());
+                break;
+
+            case TypeCode::Int16:
+                variant.setInt16(valueField.as<int16_t>());
                 break;
 
             case TypeCode::Int32:
@@ -80,20 +84,18 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     try {
         switch (variant.type()){
 
-            // Boolean TwoStateVariable -> NTEnum
+            // Boolean -> bi o bo (NTEnum with 2 options)
             case OpcUa_BuiltInType::OpcUaType_Boolean: {
                 OpcUa_Boolean opcuaBool;
                 variant.toBool(opcuaBool);
                 if(opcuaBool)
-                //value = nt::NTScalar{TypeCode::Bool}.create().update("value", rawBool);
                     value = nt::NTEnum{}.create().update("value.index", 1);
                 else
                     value = nt::NTEnum{}.create().update("value.index", 0);
-                cout << value << endl;
                 break;
             }
 
-            // Double -> Int64, longint, double?
+            // Double -> ai o ao
             case OpcUa_BuiltInType::OpcUaType_Double: {
                 double doubleValue;
                 variant.toDouble(doubleValue);
@@ -101,11 +103,27 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
                 break;
             }
 
-            // Int64 is used in MultiStateVariable -> NTEnum
+            // Int16 -> mbbi o mbbo
+            case OpcUa_BuiltInType::OpcUaType_Int16: {
+                int16_t integer;
+                variant.toInt16(integer);
+                value = nt::NTEnum{}.create().update("value.index", integer);
+                break;
+            }
+
+            // Int32 -> longin o longout
+            case OpcUa_BuiltInType::OpcUaType_Int32: {
+                int32_t integer;
+                variant.toInt32(integer);
+                value = nt::NTScalar{TypeCode::Int32}.create().update("value", integer);
+                break;
+            }
+
+            // Int64 -> int64in o int64out
             case OpcUa_BuiltInType::OpcUaType_Int64: {
                 int64_t integer;
                 variant.toInt64(integer);
-                value = nt::NTEnum{}.create().update("value.index", integer);
+                value = nt::NTScalar{TypeCode::Int64}.create().update("value", integer);
                 break;
             }
 
@@ -126,17 +144,17 @@ EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager, int
 
     m_pvxsContext = Context(Config::from_env().build());
 
-    //addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("Ejemplo1.Temperature", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("Ejemplo1.Temperature", m_pNodeManager->getNameSpaceIndex())));
     addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("Ejemplo1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
 
     addMapping( "ejemplo2:OpenCmd", PVMapping("ejemplo2:OpenCmd", UaNodeId("Ejemplo2.OpenCmd", m_pNodeManager->getNameSpaceIndex())));
-    //addMapping( "ejemplo2:Status", PVMapping("ejemplo2:Status", UaNodeId("Ejemplo2.Status", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo2:Status", PVMapping("ejemplo2:Status", UaNodeId("Ejemplo2.Status", m_pNodeManager->getNameSpaceIndex())));
 
-    //addMapping( "ejemplo3:int64out", PVMapping("ejemplo3:int64out", UaNodeId("Ejemplo3.int64out", m_pNodeManager->getNameSpaceIndex())));
-    //addMapping( "ejemplo3:int64in", PVMapping("ejemplo3:int64in", UaNodeId("Ejemplo3.int64in", m_pNodeManager->getNameSpaceIndex())));
-    //addMapping( "ejemplo3:longin", PVMapping("ejemplo3:longin", UaNodeId("Ejemplo3.longin", m_pNodeManager->getNameSpaceIndex())));
-    //addMapping( "ejemplo3:longout", PVMapping("ejemplo3:longout", UaNodeId("Ejemplo3.longout", m_pNodeManager->getNameSpaceIndex())));
-    //addMapping( "ejemplo3:mbbi", PVMapping("ejemplo3:mbbi", UaNodeId("Ejemplo3.mbbi", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:int64out", PVMapping("ejemplo3:int64out", UaNodeId("Ejemplo3.int64out", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:int64in", PVMapping("ejemplo3:int64in", UaNodeId("Ejemplo3.int64in", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:longin", PVMapping("ejemplo3:longin", UaNodeId("Ejemplo3.longin", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:longout", PVMapping("ejemplo3:longout", UaNodeId("Ejemplo3.longout", m_pNodeManager->getNameSpaceIndex())));
+    addMapping( "ejemplo3:mbbi", PVMapping("ejemplo3:mbbi", UaNodeId("Ejemplo3.mbbi", m_pNodeManager->getNameSpaceIndex())));
     addMapping( "ejemplo3:mbbo", PVMapping("ejemplo3:mbbo", UaNodeId("Ejemplo3.mbbo", m_pNodeManager->getNameSpaceIndex())));
 }
 
@@ -220,12 +238,12 @@ bool EPICStoOPCUAGateway::isMapped(const UaNodeId& nodeId){
 void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<Subscription> & subscription) const {
     if(subscription){
         try{
-            //cout << "Empieza Evento de monitoreo " << endl;
+            // cout << "Empieza Evento de monitoreo " << endl;
             Value value = subscription->pop();
             if(!value)
                 return;
             
-            cout << subscription->name() << endl;
+            // cout << subscription->name() << endl;
             auto it = m_self->m_pvMapName.find(subscription->name());
             if(it != m_self->m_pvMapName.end()){
                 //cout << "Llego a actualizar la variable" << endl;
@@ -265,11 +283,12 @@ void EPICStoOPCUAGateway::GatewayHandler::operator()(shared_ptr<PutRequest> & pu
                     .exec()->wait(1);
                 // Success
             }
-        } 
+        }
         catch (const exception & e) {
-            cerr << "Error in input request hadler: Error in pvxs put operation" << endl;
+            cerr << "Error in put request hadler: Error in pvxs put operation" << endl;
             cerr << e.what() << endl;
             // Notify NodeManager???
+            // Volver al valor anterior en el nodemanager
         }
     }
 }

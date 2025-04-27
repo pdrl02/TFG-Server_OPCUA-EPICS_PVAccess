@@ -40,44 +40,6 @@ UaStatus MyNodeIOEventManager::createObjectType(
     return result; 
 }
 
-UaStatus MyNodeIOEventManager::createAnalogVariableType(
-    const UaString & name,
-    const OpcUa_Double value,
-    const int typeId,
-    const UaNodeId & sourceNode,
-    const bool writable,
-    const bool mandatory,
-    const UaEUInformation & EngineeringUnits,
-    const UaRange & EURange,
-    const UaRange & InstrumentRange	
-    ) { 
-
-    UaVariant defaultValue;                                 // Union for all data types
-    OpcUa::BaseAnalogType * pBaseAnalogType;                // Base type for analog data
-    UaStatus result;
-
-    // Add Variable "Name" as BaseAnalogType
-    defaultValue.setDouble(value);
-    pBaseAnalogType = new OpcUa::BaseAnalogType(
-        UaNodeId( typeId, getNameSpaceIndex()),
-        name,
-        getNameSpaceIndex(),
-        defaultValue,
-        (writable ? (Ua_AccessLevel_CurrentRead | Ua_AccessLevel_CurrentWrite) : Ua_AccessLevel_CurrentRead),
-        this);
-    pBaseAnalogType->setModellingRuleId(mandatory ? OpcUaId_ModellingRule_Mandatory : OpcUaId_ModellingRule_Optional);
-    result = addNodeAndReference(sourceNode, pBaseAnalogType, OpcUaId_HasComponent);
-    UA_ASSERT(result.isGood());
-
-    // Set property values
-    pBaseAnalogType->setEngineeringUnits(EngineeringUnits);
-    pBaseAnalogType->setEURange(EURange);
-    pBaseAnalogType->setInstrumentRange(InstrumentRange);
-
-    return result;
-
-}
-
 UaStatus MyNodeIOEventManager::createTwoStateVariableType(
     const UaString &name, 
     const OpcUa_Boolean value, 
@@ -114,7 +76,7 @@ UaStatus MyNodeIOEventManager::createTwoStateVariableType(
 
 UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
     const UaString &name, 
-    const OpcUa_Int64 value, 
+    const OpcUa_Int16 value, 
     const int typeId,
     const UaNodeId &sourceNode, 
     const bool writable,
@@ -126,7 +88,7 @@ UaStatus MyNodeIOEventManager::createMultiStatateVariableType(
     OpcUa::MultiStateDiscreteType* pMultiStateDiscreteType;
     UaStatus result;
 
-    defaultValue.setInt64(value);
+    defaultValue.setInt16(value);
     pMultiStateDiscreteType = new OpcUa::MultiStateDiscreteType(
         UaNodeId(typeId, getNameSpaceIndex()),
         name,
@@ -181,10 +143,10 @@ UaStatus MyNodeIOEventManager::updateVariable(UaNodeId &nodeId, UaVariant &varia
 
     OpcUa_Double val;
     variant.toDouble(val);
-    std::cout << "Variant: " << val << std::endl;
+    //std::cout << "Variant: " << val << std::endl;
 
     UaDataValue dataValue(variant, OpcUa_Good, sourceTimestamp, serverTimestamp);
-    return pVariable->setValue( NULL /*this->m_pServerManager->getInternalSession()*/, dataValue, OpcUa_True );
+    return pVariable->setValue( NULL /*this->m_pServerManager->getInternalSession()*/, dataValue, OpcUa_False );
 }
 
 void MyNodeIOEventManager::setEPICSGateway(EPICStoOPCUAGateway* pEPICSGateway) {
@@ -209,7 +171,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     );
     UaRange temperatureRange(-50, 100);
 
-    createAnalogVariableType("Temperature", 20, TFG_IOC_Ejemplo1_Temperature, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
+    OpcUa_Double doubleValue = 20.0;
+    createAnalogVariableType("Temperature", doubleValue, TFG_IOC_Ejemplo1_Temperature, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
                          false, true, EUCelsius, temperatureRange);
 
     UaEUInformation EUPercentage(
@@ -221,14 +184,17 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
 
     UaRange fanSpeedRange(0, 100);
 
-    createAnalogVariableType("FanSpeed", 20, TFG_IOC_Ejemplo1_FanSpeed, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
+    createAnalogVariableType("FanSpeed", doubleValue, TFG_IOC_Ejemplo1_FanSpeed, UaNodeId(TFG_IOC_Ejemplo1, getNameSpaceIndex()),
                          true, true, EUPercentage, fanSpeedRange);
 
 
     // Create Variables for Ejemplo2
-    createTwoStateVariableType("OpenCmd", OpcUa_False, TFG_IOC_Ejemplo2_OpenCmd, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
+    OpcUa_Boolean valueBool = OpcUa_False;
+    createTwoStateVariableType("OpenCmd", valueBool, TFG_IOC_Ejemplo2_OpenCmd, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
                                 true, true, UaLocalizedText("en", "Closed"), UaLocalizedText("en", "Open"));
-    createTwoStateVariableType("Status", OpcUa_True, TFG_IOC_Ejemplo2_Status, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
+
+    valueBool = OpcUa_True;
+    createTwoStateVariableType("Status", valueBool, TFG_IOC_Ejemplo2_Status, UaNodeId(TFG_IOC_Ejemplo2, getNameSpaceIndex()),
                                 false, true, UaLocalizedText("en", "Stopped"), UaLocalizedText("en", "Running"));
 
     // Create Variables for Ejemplo3
@@ -239,7 +205,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", "Counter Steps")
     );
     UaRange counterRange(-2000, 100000);
-    createAnalogVariableType("int64in", 100, TFG_IOC_Ejemplo3_int64in, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    OpcUa_Int64 valueInt64 = 100;
+    createAnalogVariableType("int64in", valueInt64, TFG_IOC_Ejemplo3_int64in, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                              false, true, EUCounter, counterRange);
     
     UaEUInformation EUJoules(
@@ -249,7 +216,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", "Joules")
     );
     UaRange joulesRange(1000, 5000);
-    createAnalogVariableType("int64out", 2000, TFG_IOC_Ejemplo3_int64out, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    valueInt64 = 2000;
+    createAnalogVariableType("int64out", valueInt64, TFG_IOC_Ejemplo3_int64out, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                              true, true, EUJoules, joulesRange);
 
     UaEUInformation EUSteps(
@@ -259,7 +227,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", "Steps")
     );
     UaRange stepsRange(0, 100000);
-    createAnalogVariableType("longin", 27182, TFG_IOC_Ejemplo3_longin, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    OpcUa_Int32 valueInt32 = 27182;
+    createAnalogVariableType("longin", valueInt32, TFG_IOC_Ejemplo3_longin, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                              false, true, EUSteps, stepsRange);
 
     UaEUInformation EUCalories(
@@ -269,7 +238,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
         UaLocalizedText("en", "Calories")
     );
     UaRange caloriesRange(3000000, 4000000);
-    createAnalogVariableType("longout", 3141592, TFG_IOC_Ejemplo3_longout, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    valueInt32 = 3141592;
+    createAnalogVariableType("longout", valueInt32, TFG_IOC_Ejemplo3_longout, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                              true, true, EUCalories, caloriesRange);
 
     OpcUa_Int32 size = 4;
@@ -277,8 +247,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     states.create(size);
     for(int i = 0; i < size; ++i)
         UaLocalizedText("en", ("State " + std::to_string(i)).c_str()).copyTo(&states[i]);
-
-    createMultiStatateVariableType("mbbi", 0, TFG_IOC_Ejemplo3_mbbi, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    OpcUa_Int16 valueInt16 = 0;
+    createMultiStatateVariableType("mbbi", valueInt16, TFG_IOC_Ejemplo3_mbbi, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                                     false, true, states);
 
     
@@ -286,7 +256,8 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
     for(int i = 0; i < size * 2; ++i)
         UaLocalizedText("en", ("State " + std::to_string(i)).c_str()).copyTo(&states[i]);
     
-    createMultiStatateVariableType("mbbo", 7, TFG_IOC_Ejemplo3_mbbo, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
+    valueInt16 = 7;
+    createMultiStatateVariableType("mbbo", valueInt16, TFG_IOC_Ejemplo3_mbbo, UaNodeId(TFG_IOC_Ejemplo3, getNameSpaceIndex()),
                                     true, true, states);
 
     
@@ -320,6 +291,7 @@ OpcUa_Boolean MyNodeIOEventManager::beforeSetAttributeValue(
     if((pNode != NULL) && (pNode->nodeClass() == OpcUa_NodeClass_Variable))
         pVariable = (UaVariable*) pNode;
 
+    
     // IOC Variable
     if(m_pEPICSGateway->isMapped(pVariable->nodeId())){
 
