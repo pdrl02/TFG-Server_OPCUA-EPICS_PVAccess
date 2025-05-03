@@ -1,5 +1,6 @@
 #include "EPICStoOPCUAGateway.h"
 #include "iostream"
+#include "pvNames.h"
 
 // Workers execution
 void EPICStoOPCUAGateway::processQueue() {
@@ -139,23 +140,26 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     return value;
 }
 
+std::string EPICStoOPCUAGateway::replaceColonsWithDots(const std::string& input) {
+    std::string result = input;
+    for (char& c : result) {
+        if (c == ':') {
+            c = '.';
+        }
+    }
+    return result;
+}
+
 EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager, int numThreads)
     : m_pNodeManager(pNodeManager), m_numThreads(numThreads) {    
 
     m_pvxsContext = Context(Config::from_env().build());
 
-    addMapping( "ejemplo1:Temperature", PVMapping("ejemplo1:Temperature", UaNodeId("Ejemplo1.Temperature", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo1:FanSpeed", PVMapping("ejemplo1:FanSpeed", UaNodeId("Ejemplo1.FanSpeed", m_pNodeManager->getNameSpaceIndex())));
+    for (auto it = PV_LIST.begin(); it != PV_LIST.end(); ++it) {
+        string stringNodeId = replaceColonsWithDots(*it);
+        addMapping(*it, PVMapping(*it, UaNodeId( stringNodeId.c_str(), m_pNodeManager->getNameSpaceIndex())));
+    }
 
-    addMapping( "ejemplo2:OpenCmd", PVMapping("ejemplo2:OpenCmd", UaNodeId("Ejemplo2.OpenCmd", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo2:Status", PVMapping("ejemplo2:Status", UaNodeId("Ejemplo2.Status", m_pNodeManager->getNameSpaceIndex())));
-
-    addMapping( "ejemplo3:int64out", PVMapping("ejemplo3:int64out", UaNodeId("Ejemplo3.int64out", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo3:int64in", PVMapping("ejemplo3:int64in", UaNodeId("Ejemplo3.int64in", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo3:longin", PVMapping("ejemplo3:longin", UaNodeId("Ejemplo3.longin", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo3:longout", PVMapping("ejemplo3:longout", UaNodeId("Ejemplo3.longout", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo3:mbbi", PVMapping("ejemplo3:mbbi", UaNodeId("Ejemplo3.mbbi", m_pNodeManager->getNameSpaceIndex())));
-    addMapping( "ejemplo3:mbbo", PVMapping("ejemplo3:mbbo", UaNodeId("Ejemplo3.mbbo", m_pNodeManager->getNameSpaceIndex())));
 }
 
 EPICStoOPCUAGateway::~EPICStoOPCUAGateway() {

@@ -227,6 +227,14 @@ private:
      */
     Value convertUaDataValueToPvxsValue(const UaDataValue & dataValue);
 
+    /**
+     * @brief creates a new string in which the colon is replaced by a dot.
+     * 
+     * @param input String with initial value
+     * @return String with dot.
+     */
+    string replaceColonsWithDots(const std::string& input);
+
 
 public:
 

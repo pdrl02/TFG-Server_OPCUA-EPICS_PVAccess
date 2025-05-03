@@ -261,9 +261,9 @@ UaStatus MyNodeIOEventManager::afterStartUp(){
                                     true, true, states);
 
     
-    createObject("Ejemplo1", TFG_IOC_Ejemplo1, UaNodeId("Ejemplo1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("Ejemplo2", TFG_IOC_Ejemplo2, UaNodeId("Ejemplo2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
-    createObject("Ejemplo3", TFG_IOC_Ejemplo3, UaNodeId("Ejemplo3", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("ejemplo1", TFG_IOC_Ejemplo1, UaNodeId("ejemplo1", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("ejemplo2", TFG_IOC_Ejemplo2, UaNodeId("ejemplo2", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
+    createObject("ejemplo3", TFG_IOC_Ejemplo3, UaNodeId("ejemplo3", getNameSpaceIndex()), OpcUaId_ObjectsFolder);
        
     return UaStatus();  
 }
