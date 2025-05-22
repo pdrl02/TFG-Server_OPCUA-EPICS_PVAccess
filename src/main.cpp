@@ -106,3 +106,37 @@ int main(int, char*[])
     return 0;
     
 }
+
+// #include <pvxs/client.h>
+// #include <pvxs/nt.h>
+// #include <iostream>
+
+// using namespace pvxs;
+
+// int main()
+// {
+//         auto ctxt = client::Context::fromEnv();
+//     std::string nombrePV = "ejemplo1:Temperature";
+//     auto op = ctxt.get("ejemplo1:Temperature").exec()->wait(2);
+//     cout << op << endl;
+//     auto op1 = ctxt.get("ejemplo1:FanSpeed").exec()->wait(2);
+//     cout << op1 << endl;
+//     auto op2 = ctxt.get("ejemplo2:OpenCmd").exec()->wait(2);
+//     cout << op2 << endl;
+//     auto op3 = ctxt.get("ejemplo2:Status").exec()->wait(2);
+//     cout << op3 << endl;
+//     auto op4 = ctxt.get("ejemplo3:int64out").exec()->wait(2);
+//     cout << op4 << endl;
+//     auto op5 = ctxt.get("ejemplo3:int64in").exec()->wait(2);
+//     cout << op5 << endl;
+//     auto op6 = ctxt.get("ejemplo3:longout").exec()->wait(2);
+//     cout << op6 << endl;
+//     auto op7 = ctxt.get("ejemplo3:longin").exec()->wait(2);
+//     cout << op7 << endl;
+//     auto op8 = ctxt.get("ejemplo3:mbbi").exec()->wait(2);
+//     cout << op8 << endl;
+//     auto op9 = ctxt.get("ejemplo3:mbbo").exec()->wait(2);
+//     cout << op9 << endl;
+//     consultaMetadatos(nombrePV);
+//     return 0;
+// }

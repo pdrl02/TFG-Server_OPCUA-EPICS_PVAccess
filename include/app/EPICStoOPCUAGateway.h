@@ -211,6 +211,14 @@ private:
      */
     void processQueue();
 
+    vector<std::shared_ptr<Operation>> m_RPCforPVNames;
+
+    set<string> listServers();
+
+    vector<string> listPVNames(const set<string> & servers);
+
+    vector<string> m_pvNames;
+
     /**
      * @brief Converts a PVXS Value to an OPC UA UaVariant.
      * 
@@ -233,7 +241,7 @@ private:
      * @param input String with initial value
      * @return String with dot.
      */
-    string replaceColonsWithDots(const std::string& input);
+    string replaceColonsWithDots(const string& input);
 
 
 public:

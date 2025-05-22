@@ -1,6 +1,7 @@
 #include "EPICStoOPCUAGateway.h"
 #include "iostream"
-#include "pvNames.h"
+#include "mutex"
+#include "condition_variable"
 
 // Workers execution
 void EPICStoOPCUAGateway::processQueue() {
@@ -21,6 +22,71 @@ void EPICStoOPCUAGateway::processQueue() {
     }
 }
 
+set<string> EPICStoOPCUAGateway::listServers() {
+    set<string> ips;
+
+    auto op = m_pvxsContext.discover([&ips](const Discovered & disc){
+        // We only need Discovered event of type "Online" with tcp
+        if(disc.event == Discovered::event_t::Online && disc.proto == "tcp") {
+            ips.insert(disc.server);
+        }
+    }).pingAll(true).exec();
+
+    this_thread::sleep_for(chrono::milliseconds(500));
+
+    return ips;
+}
+
+vector<string> EPICStoOPCUAGateway::listPVNames(const set<string> & servers) {
+    vector<string> pvNames;
+    mutex mtx;
+    condition_variable cond_var;
+    atomic<int> remaining{static_cast<int>(servers.size())};
+
+    // Ask server to send pv names and wait for replies
+    for (const auto& host : servers) {
+        m_RPCforPVNames.push_back(
+            m_pvxsContext.rpc("server")
+                .server(host)
+                .arg("op", "channels")
+                .result([&](client::Result&& result) {
+                    try {
+                        // Access value or throw a exception
+                        auto top = result();
+                        // Access value as an array of strings
+                        auto channels = top["value"].as<shared_array<const string>>();
+
+                        // Lock mutex
+                        {
+                        lock_guard<mutex> lock(mtx);
+                        pvNames.insert(pvNames.end(), channels.begin(),
+                                        channels.end());
+                        }
+                        // Unlock mutex
+
+                    } catch (exception& e) {
+                        cerr << "Error discovering the name of pv variables of server: " << host << endl;
+                        cerr << e.what() << endl;
+                    }
+
+                    // All servers respond with the pv names, so wake up the thread.
+                    if (--remaining == 0) {
+                        cond_var.notify_one();
+                    }
+                })
+                .exec()
+        );
+    }
+
+    // Wait for replies
+    std::unique_lock<std::mutex> lock(mtx);
+    // Block thread until remaining == 0
+    cond_var.wait_for(lock, chrono::seconds(3), [&]() { return remaining == 0; }); 
+
+    // Clear references for operations and return pv names
+    m_RPCforPVNames.clear();
+    return pvNames;
+}
 
 UaVariant EPICStoOPCUAGateway::convertValueToVariant(const Value& value) {
     
@@ -140,8 +206,8 @@ Value EPICStoOPCUAGateway::convertUaDataValueToPvxsValue(const UaDataValue& data
     return value;
 }
 
-std::string EPICStoOPCUAGateway::replaceColonsWithDots(const std::string& input) {
-    std::string result = input;
+string EPICStoOPCUAGateway::replaceColonsWithDots(const string& input) {
+    string result = input;
     for (char& c : result) {
         if (c == ':') {
             c = '.';
@@ -155,9 +221,11 @@ EPICStoOPCUAGateway::EPICStoOPCUAGateway(MyNodeIOEventManager* pNodeManager, int
 
     m_pvxsContext = Context(Config::from_env().build());
 
-    for (auto it = PV_LIST.begin(); it != PV_LIST.end(); ++it) {
-        string stringNodeId = replaceColonsWithDots(*it);
-        addMapping(*it, PVMapping(*it, UaNodeId( stringNodeId.c_str(), m_pNodeManager->getNameSpaceIndex())));
+    m_pvNames = listPVNames(listServers());
+
+    for (string pvName : m_pvNames) {
+        string stringNodeId = replaceColonsWithDots(pvName);
+        addMapping( pvName, PVMapping(pvName, UaNodeId( stringNodeId.c_str(), m_pNodeManager->getNameSpaceIndex())));
     }
 
 }
@@ -212,7 +280,7 @@ void EPICStoOPCUAGateway::enqueuePutTask(const UaVariable * variable, const UaDa
 
     auto it = m_pvMapUaNode.find(variable->nodeId().toXmlString().toUtf8());
     if(it != m_pvMapUaNode.end()){
-        auto request = std::make_shared<PutRequest>(variable, value);
+        auto request = make_shared<PutRequest>(variable, value);
         auto eventPut = make_shared<GatewayEvent>(request);
         m_workQueue.push(eventPut);
     } else {

@@ -61,8 +61,9 @@ add_executable(Prueba
     # App
     ${SRC_DIR}/app/myNodeIOEventManager.cpp
     ${SRC_DIR}/app/EPICStoOPCUAGateway.cpp
+    ${SRC_DIR}/app/opcServer.cpp
+    ${SRC_DIR}/app/PVDiscovery.cpp
     # Utilities
-    ${SRC_DIR}/utilities/opcServer.cpp
     ${SRC_DIR}/utilities/shutdown.cpp
     ${SRC_DIR}/utilities/iocBasicObject.cpp
 )
