@@ -1,5 +1,5 @@
 # Valor que se recibe de una lectura.
-record(int64in, "ejemplo3:int64in") {
+record(int64in, "Example3:Device3:int64in") {
     field(VAL, "100")
     field(DESC, "64-bit Integer Input")
     field(SCAN, "1 second")
@@ -9,7 +9,7 @@ record(int64in, "ejemplo3:int64in") {
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
-record(int64out, "ejemplo3:int64out") {
+record(int64out, "Example3:Device3:int64out") {
     field(VAL, "2000")
     field(DESC, "64-bit Integer Output")
     field(OMSL, "supervisory")              # The new output value is taken from the VAL field, which may have been set from elsewhere.
@@ -21,7 +21,7 @@ record(int64out, "ejemplo3:int64out") {
 }
 
 # Valor que se recibe de una lectura.
-record(longin, "ejemplo3:longin") {
+record(longin, "Example3:Device3:longin") {
     field(VAL, "27182")
     field(DESC, "Long(32-bit) Integer Input")
     field(SCAN, "1 second")
@@ -31,7 +31,7 @@ record(longin, "ejemplo3:longin") {
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
-record(longout, "ejemplo3:longout") {
+record(longout, "Example3:Device3:longout") {
     field(VAL, "3141592")
     field(DESC, "Long(32-bit) Integer Output")
     field(OMSL, "supervisory")
@@ -41,7 +41,7 @@ record(longout, "ejemplo3:longout") {
 }
 
 # Valor que se recibe de una lectura.
-record(mbbi, "ejemplo3:mbbi") {
+record(mbbi, "Example3:Device3:mbbi") {
     field(VAL, "0")
     field(DESC, "Multi-Bit Binary Input with 4 states")
     field(ZRVL, "0")  # Valor para el estado 0
@@ -56,7 +56,7 @@ record(mbbi, "ejemplo3:mbbi") {
 }
 
 # Valor que sería enviado a un proceso, campo, hardware...
-record(mbbo, "ejemplo3:mbbo") {
+record(mbbo, "Example3:Device3:mbbo") {
     field(VAL, "7")
     field(DESC, "Multi-Bit Binary Input with 8 states")
     field(ZRVL, "0")  # Valor para el estado 0

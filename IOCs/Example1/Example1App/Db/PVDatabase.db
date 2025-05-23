@@ -1,4 +1,4 @@
-record(ai, "ejemplo1:Temperature") {
+record(ai, "Example1:Device1:Temperature") {
     field(DESC, "Temperature sensor")
     field(SCAN, "1 second")    # Escaneo automático cada 1 segundo
     field(VAL, "20")           # Valor incial
@@ -9,7 +9,7 @@ record(ai, "ejemplo1:Temperature") {
 }
 
 
-record(ao, "ejemplo1:FanSpeed") {
+record(ao, "Example1:Device1:FanSpeed") {
     field(DESC, "Fan speed control")
     field(VAL, "20")                    # Inicialmente al 20%
     field(DRVL, "0")                    # Mínimo valor que puede tomar el registro

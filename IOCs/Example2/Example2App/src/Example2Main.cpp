@@ -1,4 +1,4 @@
-/* Ejemplo3Main.cpp */
+/* Example2Main.cpp */
 /* Author:  Marty Kraimer Date:    17MAR2000 */
 
 #include <stddef.h>

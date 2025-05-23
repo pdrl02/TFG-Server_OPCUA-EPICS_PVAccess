@@ -23,21 +23,21 @@ cleanup() {
 pids=()
 
 # Iniciar el primer IOC en un "screen" y almacenar el nombre de la sesión
-echo "Iniciando IOC Ejemplo1"
-screen -dmS Ejemplo1 ./Ejemplo1/bin/linux-x86_64/Ejemplo1 Ejemplo1/iocBoot/iocEjemplo1/st.cmd
-pids+=("Ejemplo1")  
+echo "Iniciando IOC Example1"
+screen -dmS Example1 ./Example1/bin/linux-x86_64/Example1 Example1/iocBoot/iocExample1/st.cmd
+pids+=("Example1")  
 
-echo "Iniciando IOC Ejemplo2"
-screen -dmS Ejemplo2 ./Ejemplo2/bin/linux-x86_64/Ejemplo2 Ejemplo2/iocBoot/iocEjemplo2/st.cmd
-pids+=("Ejemplo2")
+echo "Iniciando IOC Example2"
+screen -dmS Example2 ./Example2/bin/linux-x86_64/Example2 Example2/iocBoot/iocExample2/st.cmd
+pids+=("Example2")
 
-echo "Iniciando IOC Ejemplo3"
-screen -dmS Ejemplo3 ./Ejemplo3/bin/linux-x86_64/Ejemplo3 Ejemplo3/iocBoot/iocEjemplo3/st.cmd
-pids+=("Ejemplo3")
+echo "Iniciando IOC Example3"
+screen -dmS Example3 ./Example3/bin/linux-x86_64/Example3 Example3/iocBoot/iocExample3/st.cmd
+pids+=("Example3")
 
-# Si tienes más IOCs, puedes agregarlos aquí, por ejemplo:
-# screen -dmS Ejemplo2 ./Ejemplo2/bin/linux-x86_64/Ejemplo2 Ejemplo2/iocBoot/iocEjemplo2/st.cmd
-# pids+=("Ejemplo2")  # Almacenar el nombre de la sesión del segundo IOC
+# Si tienes más IOCs, puedes agregarlos aquí, por Example:
+# screen -dmS Example2 ./Example2/bin/linux-x86_64/Example2 Example2/iocBoot/iocExample2/st.cmd
+# pids+=("Example2")  # Almacenar el nombre de la sesión del segundo IOC
 
 # Registrar el manejador de la señal Ctrl+C
 trap cleanup SIGINT
